@@ -17,11 +17,10 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include "am2320.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -101,25 +100,19 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t data[8];
-  uint8_t registers[3] = { 0x03, 0x00, 0x04 };
+
+  AM2320_HandleTypeDef am2320 = am2320_init(&hi2c1, AM2320_ADDRESS);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_I2C_Master_Transmit(&hi2c1, 0x5C<<1, 0x00, 0, HAL_MAX_DELAY);
-	  HAL_Delay(1);
-
-	  HAL_I2C_Master_Transmit(&hi2c1, 0x5C<<1, registers, 3, HAL_MAX_DELAY);
-	  HAL_Delay(2);
-
-	  HAL_I2C_Master_Receive(&hi2c1, 0x5C<<1, data, 8, HAL_MAX_DELAY);
-	  float humidity = ((data[2]<<8)+data[3]) / 10.;
-	  float temperature = ((data[4]<<8)+data[5]) / 10.;
-	  printf("Temperature: %f\nHumidity: %f\n", temperature, humidity);
-	  HAL_Delay(1000);
+	  am2320_read_temperature_and_humidity(&am2320);
+	  printf("Temperature: %d.%d\nHumidity: %d.%d\n",
+			  am2320.last_temperature /10, am2320.last_temperature % 10,
+			  am2320.last_humidity / 10, am2320.last_humidity % 10);
+	  HAL_Delay(2000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
