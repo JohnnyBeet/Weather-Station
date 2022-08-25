@@ -51,18 +51,34 @@ AM2320_HandleTypeDef am2320_init(I2C_HandleTypeDef* i2c_handle, uint8_t sensor_a
 
 /*
  * @brief handle error in am2320 communication; currently not used
+ * @param[in] error_code : one of the error codes defined above
+ *
  */
 void am2320_error_handler(uint8_t error_code);
 
 /*
  * @brief checks, whether sensor crc and computed crc are the same (validates data)
+ * @param[in] data : pointer to data received from the sensor
+ * @param[in[ size : size of the data array
  * 
+ * @return computed crc code
+ * @retval uint_16t with either: correct crc, random value, 0xFFFF (initialized with this value)
  */
 uint16_t am2320_crc_checker(uint8_t* data, uint8_t size);
 
+/*
+ * @brief prompts sensor for measurement, converts received data and stores them
+ * 		  in handle fields
+ * @param[in] am2320 : pointer to instance of sensor handle
+ *
+ * @return doesn't return anything
+ * @retval doesn't return anything. Have "return" statements for early quitting.
+ */
 void am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320);
 
-// currently not used
+/*
+ * @brief currently not used; too lazy to nicely comment
+ */
 void am2320_write(AM2320_HandleTypeDef* am2320, uint8_t reg_addr);
 
 #endif /* INC_AM2320_H_ */

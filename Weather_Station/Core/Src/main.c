@@ -20,6 +20,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "main.h"
 #include "am2320.h"
 /* USER CODE END Includes */
 
