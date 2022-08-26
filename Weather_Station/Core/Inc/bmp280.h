@@ -114,7 +114,13 @@ typedef struct{
  * #TODO: comment
  */
 
-bool bmp280_read_regs(BMP280_HandleTypedef* bmp, uint8_t reg_amount, uint8_t reg_address, uint16_t* reg_contents);
+bool bmp280_read_reg16(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint16_t* reg_contents);
+
+/*
+ * #TODO: comment
+ */
+
+bool bmp280_read_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* reg_contents);
 
 /*
  * @brief reads compensation parameters from sensor and puts them in sensor handle
@@ -154,7 +160,7 @@ uint8_t bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
  * @retval Doesn't return anything, other function used for extracting data from registers
  */
 
-void bmp280_force_measurement(BMP280_HandleTypedef* bmp);
+bool bmp280_force_measurement(BMP280_HandleTypedef* bmp);
 
 /*
  * @brief reads register data and returns them raw (20bit integers -> 32bit ints)
