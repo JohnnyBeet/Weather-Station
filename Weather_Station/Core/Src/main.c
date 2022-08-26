@@ -22,6 +22,7 @@
 /* USER CODE BEGIN Includes */
 #include "main.h"
 #include "am2320.h"
+#include "bmp280.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

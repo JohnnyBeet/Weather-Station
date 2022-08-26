@@ -8,6 +8,10 @@
 #ifndef INC_BMP280_H_
 #define INC_BMP280_H_
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <stm32f4xx_hal.h>
+
 /*
  * taken from documentation:
  * connecting SDO to the ground results in address 0x76
@@ -37,17 +41,17 @@ typedef enum{
 
 typedef struct {
 	uint16_t dig_T1;
-	uint8_t dig_T2;
-	uint8_t dig_T3;
+	int16_t dig_T2;
+	int16_t dig_T3;
 	uint16_t dig_P1;
-	uint8_t digP2;
-	uint8_t digP3;
-	uint8_t digP4;
-	uint8_t digP5;
-	uint8_t digP6;
-	uint8_t digP7;
-	uint8_t digP8;
-	uint8_t digP9;
+	int16_t dig_P2;
+	int16_t dig_P3;
+	int16_t dig_P4;
+	int16_t dig_P5;
+	int16_t dig_P6;
+	int16_t dig_P7;
+	int16_t dig_P8;
+	int16_t dig_P9;
 }BMP280_CompensationParams;
 
 /*
@@ -101,14 +105,29 @@ typedef struct{
 	BMP280_Mode mode_;
 	BMP280_CompensationParams compenstation_params_;
 	BMP280_Filter filter_;
-	BMP280_Oversampling oversampling_;
+	BMP280_Oversampling temperature_oversampling_;
+	BMP280_Oversampling pressure_oversampling_;
 	BMP280_TimeStandby time_standby_;
 }BMP280_HandleTypedef;
 
+/*
+ * #TODO: comment
+ */
+
+bool bmp280_read_regs(BMP280_HandleTypedef* bmp, uint8_t reg_amount, uint8_t reg_address, uint16_t* reg_contents);
+
+/*
+ * @brief reads compensation parameters from sensor and puts them in sensor handle
+ * @param[in] bmp280 : pointer to sensor handle
+ *
+ * @return None
+ */
+
+bool bmp280_get_compensation_data(BMP280_HandleTypedef* bmp);
 
 /*
  * @brief initialize sensor instance for working in forced mode.
- * @param[in] bmp : pointer to bmp sensor structure.
+ * @param[in] bmp280 : pointer to sensor handle
  * @param[out] bmp : initialized bmp instance.
  * 					 If fields fail to initalize then there will be rubbish in them
  *
@@ -118,13 +137,48 @@ typedef struct{
 void bmp280_init_force_mode(BMP280_HandleTypedef* bmp);
 
 /*
- * @brief reads compensation parameters from sensor and puts them in sensor handle
- * @param[in] sensor_comp_params : pointer to struct of compensation params
- * @param[out] sensor_comp_params : initialized compensation params in sensor handle
+ * @brief checks if sensor has finished conversion.
+ * @param[in] bmp280 : pointer to sensor handle
  *
- * @return None
+ * @return 0 or 1
+ * @retval 0 if measurement hasn't ended, 1 if measurement has ended
  */
 
-void bmp280_get_compensation_data(BMP280_CompensationParams* sensor_comp_params);
+uint8_t bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
+
+/*
+ * @brief initiates force measurement
+ * @param[in] bmp280 : pointer to sensor handle
+ *
+ * @return None
+ * @retval Doesn't return anything, other function used for extracting data from registers
+ */
+
+void bmp280_force_measurement(BMP280_HandleTypedef* bmp);
+
+/*
+ * @brief reads register data and returns them raw (20bit integers -> 32bit ints)
+ * @param[in] bmp280 : pointer to sensor handle
+ * @param[in] raw_pressure : pointer to uint32 which will hold pressure value
+ * @param[in] raw_temperature : pointer to int32 which will hold temperature value
+ *
+ * @return None
+ * @retval Properly read values of temp & press or will call an error handler
+ */
+
+void bmp280_read_raw_measurements(BMP280_HandleTypedef* bmp280,
+			uint32_t* raw_pressure, int32_t* raw_temperature);
+
+/*
+ * @brief compensates and calculates raw data into human-appealing format
+ * param[in] raw_pressure : value of pressure read directly from the sensor
+ * param[in] raw_temperature : value of temperature read directly from the sensor
+ * param[out] pressure : pointer to which function will write computed pressure value
+ * param[out] temperature : pointer to which function will write computed temperature value
+ *
+ * @return None
+ * @retval Properly calculated values of temp & press or will call an error handler
+ */
+
 
 #endif /* INC_BMP280_H_ */
