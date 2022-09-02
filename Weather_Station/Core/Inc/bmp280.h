@@ -103,7 +103,7 @@ typedef struct{
 	I2C_HandleTypeDef* i2c_handle_;
 	BMP280_Address address_;
 	BMP280_Mode mode_;
-	BMP280_CompensationParams compenstation_params_;
+	BMP280_CompensationParams compensation_params_;
 	BMP280_Filter filter_;
 	BMP280_Oversampling temperature_oversampling_;
 	BMP280_Oversampling pressure_oversampling_;
@@ -123,6 +123,12 @@ bool bmp280_read_reg16(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint16_t*
 bool bmp280_read_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* reg_contents);
 
 /*
+ * #TODO: comment
+ */
+
+bool bmp280_write_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* reg_contents);
+
+/*
  * @brief reads compensation parameters from sensor and puts them in sensor handle
  * @param[in] bmp280 : pointer to sensor handle
  *
@@ -131,7 +137,7 @@ bool bmp280_read_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* r
 
 bool bmp280_get_compensation_data(BMP280_HandleTypedef* bmp);
 
-/*
+/* TODO: fix
  * @brief initialize sensor instance for working in forced mode.
  * @param[in] bmp280 : pointer to sensor handle
  * @param[out] bmp : initialized bmp instance.
@@ -140,7 +146,7 @@ bool bmp280_get_compensation_data(BMP280_HandleTypedef* bmp);
  * @return None
  */
 
-void bmp280_init_force_mode(BMP280_HandleTypedef* bmp);
+bool bmp280_init_force_mode(BMP280_HandleTypedef* bmp);
 
 /*
  * @brief checks if sensor has finished conversion.
@@ -150,7 +156,7 @@ void bmp280_init_force_mode(BMP280_HandleTypedef* bmp);
  * @retval 0 if measurement hasn't ended, 1 if measurement has ended
  */
 
-uint8_t bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
+bool bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
 
 /*
  * @brief initiates force measurement
@@ -163,6 +169,18 @@ uint8_t bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
 bool bmp280_force_measurement(BMP280_HandleTypedef* bmp);
 
 /*
+ * TODO
+ */
+
+int32_t bmp280_compensate_T_int32(BMP280_HandleTypedef* bmp, int32_t adc_T);
+
+/*
+ *
+ */
+
+uint32_t bmp280_compensate_P_int64(BMP280_HandleTypedef* bmp, int32_t adc_P);
+
+/*
  * @brief reads register data and returns them raw (20bit integers -> 32bit ints)
  * @param[in] bmp280 : pointer to sensor handle
  * @param[in] raw_pressure : pointer to uint32 which will hold pressure value
@@ -172,7 +190,7 @@ bool bmp280_force_measurement(BMP280_HandleTypedef* bmp);
  * @retval Properly read values of temp & press or will call an error handler
  */
 
-void bmp280_read_raw_measurements(BMP280_HandleTypedef* bmp280,
+bool bmp280_get_measurements(BMP280_HandleTypedef* bmp280,
 			uint32_t* raw_pressure, int32_t* raw_temperature);
 
 /*
