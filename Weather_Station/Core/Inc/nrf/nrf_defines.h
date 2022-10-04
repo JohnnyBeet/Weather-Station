@@ -8,6 +8,8 @@
 #ifndef INC_NRF_NRF_DEFINES_H_
 #define INC_NRF_NRF_DEFINES_H_
 
+extern SPI_HandleTypeDef hspi2;		// for passing it to the NRF typedef
+
 /*
  * COMMANDS
  */
@@ -114,7 +116,11 @@ typedef enum{
 	THREE = 0x01,
 	FOUR = 0x02,
 	FIVE = 0x03
-}NRF_Address_Width;
+}NRF_AddressWidth;
+
+/*
+ *
+ */
 
 typedef enum{
 	DELAY_250uS = 0x00,
@@ -133,6 +139,85 @@ typedef enum{
 	DELAY_3500uS = 0x0D,
 	DELAY_3750uS = 0x0E,
 	DELAY_4000uS = 0x0F
-}NRF_Retransmit_Delay;
+}NRF_RetransmitDelay;
+
+typedef enum{
+	RATE_1Mbps = 0x00,
+	RATE_2Mbps = 0x01
+}NRF_AirDataRate;
+
+typedef uint8_t NRF_Frequency;
+
+typedef enum{
+	dBm_0 = 0x03,
+	dBm_6 = 0x02,
+	dBm_12 = 0x01,
+	dBm_18 = 0x00
+}NRF_PowerAmplifier;
+
+typedef enum{
+	LOW = 0x00,
+	HIGH = 0x01
+}NRF_LNAsetup;
+
+typedef enum{
+	RX = 0x01,
+	TX = 0x00
+}NRF_Mode;
+
+typedef enum{
+	OFF = 0x00,
+	ON = 0x01
+}NRF_DynamicPayload;
+
+typedef enum{
+	ONE = 0x00,
+	TWO = 0x01
+}NRF_CRCbytes;
+
+typedef enum{
+	ENABLE = 0x01,
+	DISABLE = 0x00
+}NRF_CRC;
+
+typedef enum{
+	OFF = 0x00,
+	ON = 0x01
+}NRF_AutoAcknowledge;
+
+typedef enum{
+	OFF = 0x00,
+	ONE = 0x01,
+	TWO = 0x02,
+	THREE = 0x03,
+	FOUR = 0x04,
+	FIVE = 0x05,
+	SIX = 0x06,
+	SEVEN = 0x07,
+	EIGHT = 0x08,
+	NINE = 0x09,
+	TEN = 0x0A,
+	ELEVEN = 0x0B,
+	TWELVE = 0x0C,
+	THIRTEEN = 0x0D,
+	FOURTEEN = 0x0E,
+	FIFTEEN = 0x0F
+}NRF_RetransmitCount;
+
+typedef struct{
+	SPI_HandleTypedef* spi_handle_;
+	NRF_AirDataRate rate_;
+	NRF_Frequency frequency_;
+	NRF_PowerAmplifier power_amp_;
+	NRF_LNAsetup lna_;
+	NRF_Mode mode_;
+	NRF_DynamicPayload dpl_;
+	NRF_CRC crc_;
+	NRF_CRCbytes crc_bytes_;
+	NRF_AddressWidth address_width_;
+	NRF_AutoAcknowledge ack_;
+	NRF_RetransmitCount retransmissions_;
+	NRF_RetransmitDelay ret_delay_;
+}NRF_HandleTypedef;
 
 #endif /* INC_NRF_NRF_DEFINES_H_ */
