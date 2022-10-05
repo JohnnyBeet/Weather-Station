@@ -1,0 +1,3 @@
+bmp280 - peak to 1120 uA w trakcie pomiaru temperatury, normalnie mniej
+am2320 - srednio 950 uA podczas pomiaru, przyjmę średnio 10 razy więcej jako peak, czyli 10 mA
+nrf24 - średnio dla transmitu i receivu koło 10mA, ale na ogół mniej
