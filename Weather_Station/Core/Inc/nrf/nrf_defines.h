@@ -8,7 +8,7 @@
 #ifndef INC_NRF_NRF_DEFINES_H_
 #define INC_NRF_NRF_DEFINES_H_
 
-extern SPI_HandleTypeDef hspi2;		// for passing it to the NRF typedef
+extern SPI_HandleTypeDef hspi2;
 
 /*
  * COMMANDS
@@ -204,8 +204,18 @@ typedef enum{
 	FIFTEEN = 0x0F
 }NRF_RetransmitCount;
 
+typedef enum{
+	RX_PIPE_0 = 0x00,
+	RX_PIPE_1 = 0x01,
+	RX_PIPE_2 = 0x02,
+	RX_PIPE_3 = 0x03,
+	RX_PIPE_4 = 0x04,
+	RX_PIPE_5 = 0x05,
+	TX_PIPE = 0x06,
+}NRF_Pipe;
+
+
 typedef struct{
-	SPI_HandleTypedef* spi_handle_;
 	NRF_AirDataRate rate_;
 	NRF_Frequency frequency_;
 	NRF_PowerAmplifier power_amp_;

@@ -24,11 +24,25 @@
 #define NRF_CE_SET_LOW		HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET)
 
 /*
+ * low level spi transmit receive function
+ *
+ */
+
+uint8_t NRF_SPI_RW(uint8_t transmit_buff){
+	uint8_t receive_buff;
+	if(HAL_SPI_TransmitReceive(&hspi2, &transmit_buff,&receive_buff, 1, 1000) != HAL_OK){
+		Error_Handler();
+	}
+	return receive_buff;
+}
+
+/*
  * general purpose functions
  */
 
-bool NRF_read_reg(uint8_t address, uint8_t* data);
-bool NRF_write_reg(uint8_t address, uint8_t data);
+bool NRF_ReadRegs(uint8_t address, uint8_t* data, uint8_t length);
+bool NRF_WriteRegs(uint8_t address, uint8_t data, uint8_t length);
+bool NRF_Init();
 
 /*
  * setters
@@ -40,9 +54,17 @@ bool NRF_SET_LNAsetup(NRF_LNAsetup lna);
 bool NRF_SET_Mode(NRF_Mode mode);
 bool NRF_SET_DynamicPayload(NRF_DynamicPayload dpl);
 bool NRF_SET_CRC(NRF_CRC crc, NRF_CRCbytes);
-bool NRF_SET_AddressWidth(NRF_AddressWidth width);
+bool NRF_SET_PipeAddressWidth(NRF_AddressWidth width);
 bool NRF_SET_AutoAcknowledge(NRF_AutoAcknowledge ack);
 bool NRF_SET_Retransmission(NRF_RetransmitDelay ard, NRF_RetransmitCount arc);
-//TODO: understand whats going on with data pipes, setting their addresses and etc.
+bool NRF_SET_PipeAddress(NRF_Pipe pipe, uint8_t* address);
+bool NRF_SET_PipeRX(NRF_Pipe pipe, uint8_t auto_ack, uint8_t payload_length);
+bool NRF_SET_IRQFlags()
 
+/*
+ * getters
+ */
+
+bool NRF_GET_RXFifoState();
+bool NRF_GET_TXFifoState();
 #endif /* INC_NRF_NRF_H_ */
