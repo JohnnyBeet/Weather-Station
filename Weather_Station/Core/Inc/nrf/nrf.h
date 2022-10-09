@@ -24,8 +24,11 @@
 #define NRF_CE_SET_LOW		HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET)
 
 /*
- * low level spi transmit receive function
+ * @brief: low level spi transmit receive function
+ * @param[in] transmit_buff : transmit command through SPI. Use NOP in case reading only
  *
+ * @return: read value or nothing in case of writing only
+ * @retval: uint8_t register value, nothing or calls error handler
  */
 
 uint8_t NRF_SPI_RW(uint8_t transmit_buff){
