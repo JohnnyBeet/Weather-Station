@@ -8,14 +8,23 @@
 #ifndef INC_NRF_NRF_DEFINES_H_
 #define INC_NRF_NRF_DEFINES_H_
 
+#include "main.h"
+
 extern SPI_HandleTypeDef hspi2;
+
+/*
+ * ERROR CODES
+ */
+
+#define NRF_ERROR (uint8_t)0
+#define NRF_OK	(uint8_t)1
 
 /*
  * COMMANDS
  */
 
 #define	NRF_CMD_R_REGISTER  	(uint8_t)0x00	// read command and status registers (5 last bits address)
-#define	NRF_CMD_W_REGISTER  	(uint8_t)0x02	// write command and status registers (5 last bits address)
+#define	NRF_CMD_W_REGISTER  	(uint8_t)0x20	// write command and status registers (5 last bits address)
 #define	NRF_CMD_R_RX_PAYLOAD    (uint8_t)0x61	// read rx payload
 #define	NRF_CMD_W_TX_PAYLOAD    (uint8_t)0xA0	// write tx payload
 #define NRF_CMD_FLUSH_TX		(uint8_t)0xE1	// flush tx FIFO
@@ -112,10 +121,10 @@ extern SPI_HandleTypeDef hspi2;
  */
 
 typedef enum{
-	ILLEGAL = 0x00,
-	THREE = 0x01,
-	FOUR = 0x02,
-	FIVE = 0x03
+	ADR_ILLEGAL = 0x00,
+	ADR_THREE = 0x01,
+	ADR_FOUR = 0x02,
+	ADR_FIVE = 0x03
 }NRF_AddressWidth;
 
 /*
@@ -156,8 +165,8 @@ typedef enum{
 }NRF_PowerAmplifier;
 
 typedef enum{
-	LOW = 0x00,
-	HIGH = 0x01
+	LNA_LOW = 0x00,
+	LNA_HIGH = 0x01
 }NRF_LNAsetup;
 
 typedef enum{
@@ -166,42 +175,42 @@ typedef enum{
 }NRF_Mode;
 
 typedef enum{
-	OFF = 0x00,
-	ON = 0x01
+	DPL_OFF = 0x00,
+	DPL_ON = 0x01
 }NRF_DynamicPayload;
 
 typedef enum{
-	ONE = 0x00,
-	TWO = 0x01
+	CRCB_ONE = 0x00,
+	CRCB_TWO = 0x01
 }NRF_CRCbytes;
 
 typedef enum{
-	ENABLE = 0x01,
-	DISABLE = 0x00
+	CRC_ENABLE = 0x01,
+	CRC_DISABLE = 0x00
 }NRF_CRC;
 
 typedef enum{
-	OFF = 0x00,
-	ON = 0x01
+	AA_OFF = 0x00,
+	AA_ON = 0x01
 }NRF_AutoAcknowledge;
 
 typedef enum{
-	OFF = 0x00,
-	ONE = 0x01,
-	TWO = 0x02,
-	THREE = 0x03,
-	FOUR = 0x04,
-	FIVE = 0x05,
-	SIX = 0x06,
-	SEVEN = 0x07,
-	EIGHT = 0x08,
-	NINE = 0x09,
-	TEN = 0x0A,
-	ELEVEN = 0x0B,
-	TWELVE = 0x0C,
-	THIRTEEN = 0x0D,
-	FOURTEEN = 0x0E,
-	FIFTEEN = 0x0F
+	ARC_OFF = 0x00,
+	ARC_ONE = 0x01,
+	ARC_TWO = 0x02,
+	ARC_THREE = 0x03,
+	ARC_FOUR = 0x04,
+	ARC_FIVE = 0x05,
+	ARC_SIX = 0x06,
+	ARC_SEVEN = 0x07,
+	ARC_EIGHT = 0x08,
+	ARC_NINE = 0x09,
+	ARC_TEN = 0x0A,
+	ARC_ELEVEN = 0x0B,
+	ARC_TWELVE = 0x0C,
+	ARC_THIRTEEN = 0x0D,
+	ARC_FOURTEEN = 0x0E,
+	ARC_FIFTEEN = 0x0F
 }NRF_RetransmitCount;
 
 typedef enum{
@@ -229,5 +238,4 @@ typedef struct{
 	NRF_RetransmitCount retransmissions_;
 	NRF_RetransmitDelay ret_delay_;
 }NRF_HandleTypedef;
-
 #endif /* INC_NRF_NRF_DEFINES_H_ */

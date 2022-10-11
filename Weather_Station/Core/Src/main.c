@@ -21,9 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "main.h"
 #include "am2320.h"
 #include "bmp280.h"
+#include "nrf/nrf.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -118,6 +118,18 @@ int main(void)
   bmp280.i2c_handle_ = &hi2c3;
   bmp280_init_force_mode(&bmp280);
 
+  uint8_t data[1];
+  NRF_ReadRegs(NRF_REG_CONFIG, data, 1);
+  printf("CONFIG: %d\n", data[0]);
+  HAL_Delay(200);
+  uint8_t w_data[1] = {(uint8_t)12};
+  NRF_WriteRegs(NRF_REG_CONFIG, w_data, 1);
+  HAL_Delay(200);
+  NRF_ReadRegs(NRF_REG_CONFIG, data, 1);
+  printf("CONFIG after write: %d\n", data[0]);
+
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -129,10 +141,12 @@ int main(void)
 //	  printf("Temperature: %d.%d\nHumidity: %d.%d\n",
 //			  am2320.last_temperature /10, am2320.last_temperature % 10,
 //			  am2320.last_humidity / 10, am2320.last_humidity % 10);
-	  bmp280_force_measurement(&bmp280);
-	  bmp280_get_measurements(&bmp280, &bmp280_press, &bmp280_temp);
-	  printf("Temperature: %d.%d\nPressure: %.3f\n", (int)(bmp280_temp/100), (int)(bmp280_temp%100),
-			  (float)bmp280_press/25600.);
+//	  bmp280_force_measurement(&bmp280);
+//	  bmp280_get_measurements(&bmp280, &bmp280_press, &bmp280_temp);
+//	  printf("Temperature: %d.%d\nPressure: %.3f\n", (int)(bmp280_temp/100), (int)(bmp280_temp%100),
+//			  (float)bmp280_press/25600.);
+	  printf("cos\n");
+//	  printf("Read data from register CONFIG: %d\n", data[0]);
 	  HAL_Delay(2000);
     /* USER CODE END WHILE */
 
@@ -366,6 +380,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : NRF_IRQ_Pin */
+  GPIO_InitStruct.Pin = NRF_IRQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
 
 }
 
