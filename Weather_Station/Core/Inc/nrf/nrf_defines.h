@@ -50,19 +50,20 @@ extern SPI_HandleTypeDef hspi2;
 #define NRF_REG_STATUS			(uint8_t)0x07	// status register
 #define NRF_REG_OBSERVE_TX		(uint8_t)0x08	// tx observe register (lost packets)
 #define NRF_REG_CD				(uint8_t)0x09	// carrier detect
-#define NRF_REG_RX_ADDR_P0		(uint8_t)0x0A	// receive address data pipe 0
-#define NRF_REG_RX_ADDR_P1		(uint8_t)0x0B	// receive address data pipe 1
-#define NRF_REG_RX_ADDR_P2		(uint8_t)0x0C	// receive address data pipe 2
-#define NRF_REG_RX_ADDR_P3		(uint8_t)0x0D	// receive address data pipe 3
-#define NRF_REG_RX_ADDR_P4		(uint8_t)0x0E	// receive address data pipe 4
-#define NRF_REG_RX_ADDR_P5		(uint8_t)0x0F	// receive address data pipe 5
+#define NRF_REG_RX_ADDR_BASE	(uint8_t)0x0A	// receive address data pipe 0
+												//(also base address for every other pipe)
+//#define NRF_REG_RX_ADDR_P1		(uint8_t)0x0B	// receive address data pipe 1
+//#define NRF_REG_RX_ADDR_P2		(uint8_t)0x0C	// receive address data pipe 2
+//#define NRF_REG_RX_ADDR_P3		(uint8_t)0x0D	// receive address data pipe 3
+//#define NRF_REG_RX_ADDR_P4		(uint8_t)0x0E	// receive address data pipe 4
+//#define NRF_REG_RX_ADDR_P5		(uint8_t)0x0F	// receive address data pipe 5
 #define NRF_REG_TX_ADDR			(uint8_t)0x10	// transmit address (ptx only)
-#define NRF_REG_RX_PW_P0		(uint8_t)0x11	// number of bytes in rx payload data pipe 0
-#define NRF_REG_RX_PW_P1		(uint8_t)0x12	// number of bytes in rx payload data pipe 1
-#define NRF_REG_RX_PW_P2		(uint8_t)0x13	// number of bytes in rx payload data pipe 2
-#define NRF_REG_RX_PW_P3		(uint8_t)0x14	// number of bytes in rx payload data pipe 3
-#define NRF_REG_RX_PW_P4		(uint8_t)0x15	// number of bytes in rx payload data pipe 4
-#define NRF_REG_RX_PW_P5		(uint8_t)0x16	// number of bytes in rx payload data pipe 5
+#define NRF_REG_RX_PW_BASE		(uint8_t)0x11	// number of bytes in rx payload data pipe base
+//#define NRF_REG_RX_PW_P1		(uint8_t)0x12	// number of bytes in rx payload data pipe 1
+//#define NRF_REG_RX_PW_P2		(uint8_t)0x13	// number of bytes in rx payload data pipe 2
+//#define NRF_REG_RX_PW_P3		(uint8_t)0x14	// number of bytes in rx payload data pipe 3
+//#define NRF_REG_RX_PW_P4		(uint8_t)0x15	// number of bytes in rx payload data pipe 4
+//#define NRF_REG_RX_PW_P5		(uint8_t)0x16	// number of bytes in rx payload data pipe 5
 #define NRF_REG_FIFO_STATUS		(uint8_t)0x17	// fifo status register
 #define NRF_REG_DYNPD			(uint8_t)0x1C	// enable dynamic payload length
 #define NRF_REG_FEATURE			(uint8_t)0x1D	// feature register
@@ -74,14 +75,14 @@ extern SPI_HandleTypeDef hspi2;
 #define NRF_MASK_RW_REG			(uint8_t)0x1F	// mask for address bits in R/W reg commands
 #define NRF_MASK_W_ACK			(uint8_t)0x07	// mask for pipe number for W_ACK_PAYLOAD command
 #define NRF_MASK_IRQ			(uint8_t)0x70	// mask for IRQ bits in config reg
-#define NRF_MASK_CRC 			(uint8_t)0x0E	// mask for CRC settings in config reg
+#define NRF_MASK_CRC 			(uint8_t)0x0C	// mask for CRC settings in config reg
 #define NRF_MASK_MODE			(uint8_t)0x01	// mask for switching between RX/TX
-#define NRF_MASK_EN_P0			(uint8_t)0x01	// mask for enabling pipe 0 for couple of commands/registers
-#define NRF_MASK_EN_P1			(uint8_t)0x02	// mask for enabling pipe 1 for couple of commands/registers
-#define NRF_MASK_EN_P2			(uint8_t)0x04	// mask for enabling pipe 2 for couple of commands/registers
-#define NRF_MASK_EN_P3			(uint8_t)0x08	// mask for enabling pipe 3 for couple of commands/registers
-#define NRF_MASK_EN_P4			(uint8_t)0x10	// mask for enabling pipe 4 for couple of commands/registers
-#define NRF_MASK_EN_P5			(uint8_t)0x20	// mask for enabling pipe 5 for couple of commands/registers
+#define NRF_MASK_EN_BASE		(uint8_t)0x01	// mask for enabling pipe for couple of commands/registers
+//#define NRF_MASK_EN_P1			(uint8_t)0x02	// mask for enabling pipe 1 for couple of commands/registers
+//#define NRF_MASK_EN_P2			(uint8_t)0x04	// mask for enabling pipe 2 for couple of commands/registers
+//#define NRF_MASK_EN_P3			(uint8_t)0x08	// mask for enabling pipe 3 for couple of commands/registers
+//#define NRF_MASK_EN_P4			(uint8_t)0x10	// mask for enabling pipe 4 for couple of commands/registers
+//#define NRF_MASK_EN_P5			(uint8_t)0x20	// mask for enabling pipe 5 for couple of commands/registers
 #define	NRF_MASK_AW				(uint8_t)0x03	// mask for address width field
 #define NRF_MASK_ARD			(uint8_t)0xF0	// mask for auto retransmission delay
 #define NRF_MASK_ARC			(uint8_t)0x0F	// mask for auto retransmission count
@@ -99,7 +100,7 @@ extern SPI_HandleTypeDef hspi2;
 #define NRF_MASK_PLOS_CNT		(uint8_t)0xF0	// mask for counter of lost packets
 #define NRF_MASK_ARC_CNT		(uint8_t)0x0F	// mask for counter of retransmitted packets
 #define NRF_MASK_CD				(uint8_t)0x01	// mask for carrier detect
-#define NRF_MASK_RX_PW_P		(uint8_t)0x10	// mask for number of bytes in rx payload for given pipe
+#define NRF_MASK_RX_PW_P		(uint8_t)0x3F	// mask for number of bytes in rx payload for given pipe
 #define NRF_MASK_TX_REUSE		(uint8_t)0x40	// mask for flag to reuse last transmitted packet
 #define NRF_MASK_TX_FULL		(uint8_t)0x20	// mask for tx fifo full flag
 #define NRF_MASK_TX_EMPTY		(uint8_t)0x10	// mask for tx fifo empty flag
@@ -223,7 +224,6 @@ typedef enum{
 	TX_PIPE = 0x06,
 }NRF_Pipe;
 
-
 typedef struct{
 	NRF_AirDataRate rate_;
 	NRF_Frequency frequency_;
@@ -234,7 +234,7 @@ typedef struct{
 	NRF_CRC crc_;
 	NRF_CRCbytes crc_bytes_;
 	NRF_AddressWidth address_width_;
-	NRF_AutoAcknowledge ack_;
+//	NRF_AutoAcknowledge ack_;
 	NRF_RetransmitCount retransmissions_;
 	NRF_RetransmitDelay ret_delay_;
 }NRF_HandleTypedef;

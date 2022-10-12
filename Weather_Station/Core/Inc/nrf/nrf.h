@@ -38,6 +38,13 @@ uint8_t NRF_SPI_RW(uint8_t transmit_buff, uint8_t* receive_buff);
 
 bool NRF_ReadRegs(uint8_t address, uint8_t* data, uint8_t length);
 bool NRF_WriteRegs(uint8_t address, uint8_t* data, uint8_t length);
+bool NRF_FlushRXFifo(void);
+bool NRF_FlushTXFifo(void);
+bool NRF_WriteTxPayload(uint8_t* data, uint8_t length);
+bool NRF_ReadRxPayload(uint8_t* data, uint8_t length);
+bool NRF_ClearIRQFlags(void);
+
+
 bool NRF_Init();
 
 /*
@@ -49,13 +56,12 @@ bool NRF_SET_PowerAmplifier(NRF_PowerAmplifier amp);
 bool NRF_SET_LNAsetup(NRF_LNAsetup lna);
 bool NRF_SET_Mode(NRF_Mode mode);
 bool NRF_SET_DynamicPayload(NRF_DynamicPayload dpl);
-bool NRF_SET_CRC(NRF_CRC crc, NRF_CRCbytes);
+bool NRF_SET_CRC(NRF_CRC crc, NRF_CRCbytes bytes);
 bool NRF_SET_PipeAddressWidth(NRF_AddressWidth width);
-bool NRF_SET_AutoAcknowledge(NRF_AutoAcknowledge ack);
+//bool NRF_SET_AutoAcknowledge(NRF_AutoAcknowledge ack); prolly wont be used
 bool NRF_SET_Retransmission(NRF_RetransmitDelay ard, NRF_RetransmitCount arc);
 bool NRF_SET_PipeAddress(NRF_Pipe pipe, uint8_t* address);
 bool NRF_SET_PipeRX(NRF_Pipe pipe, uint8_t auto_ack, uint8_t payload_length);
-bool NRF_SET_IRQFlags();
 
 /*
  * getters
