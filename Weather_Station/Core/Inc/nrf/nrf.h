@@ -69,4 +69,10 @@ bool NRF_SET_PipeRX(NRF_Pipe pipe, uint8_t auto_ack, uint8_t payload_length);
 
 bool NRF_GET_RXFifoState();
 bool NRF_GET_TXFifoState();
+
+/*
+ * interrupts related
+ */
+void NRF_IRQ_Event(uint8_t* nrfInterruptFlag);
+bool NRF_IRQ_Handler(uint8_t* nrfInterruptFlag);
 #endif /* INC_NRF_NRF_H_ */

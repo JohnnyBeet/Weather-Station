@@ -424,3 +424,26 @@ bool NRF_ClearIRQFlags(void){
 	}
 	return NRF_OK;
 }
+
+/*
+ * @brief set flag to signalize interrupt occurence
+ * @param[in] nrfInterruptFlag : pointer to global flag indicating interrupt state
+ * @return nothing
+ * @retval nothing
+ */
+
+void NRF_IRQ_Event(uint8_t* nrfInterruptFlag){
+	*nrfInterrupt = 1;
+}
+
+/*
+ * @brief reads interrupt source and
+ * @param[in] nrfInterruptFlag : pointer to global flag indicating interrupt state
+ *
+ * @return nothing
+ * @retval nothing
+ */
+
+bool NRF_IRQ_Handler(uint8_t* nrfInterrupt){
+
+}
