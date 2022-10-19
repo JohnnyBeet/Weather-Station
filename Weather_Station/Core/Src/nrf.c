@@ -25,7 +25,6 @@ uint8_t NRF_SPI_RW(uint8_t transmit_buff, uint8_t* receive_buff){
  * @return data from given register
  * @retval 1 in case of successful read , 0 in case of failure
  */
-
 bool NRF_ReadRegs(uint8_t address, uint8_t* data, uint8_t length){
 	// buffer for receiving
 	uint8_t address_rx = 0;
@@ -58,7 +57,6 @@ bool NRF_ReadRegs(uint8_t address, uint8_t* data, uint8_t length){
  * @return None
  * @retval 1 in case of successful write, 0 in case of failure
  */
-
 bool NRF_WriteRegs(uint8_t address, uint8_t* data, uint8_t length){
 	// buffer for receiving
 	uint8_t address_rx = 0;
@@ -79,7 +77,6 @@ bool NRF_WriteRegs(uint8_t address, uint8_t* data, uint8_t length){
 	NRF_CSN_SET_HIGH;
 	return NRF_OK;
 }
-
 /*
  * @brief Init function. Defines basic configuration:
  * - only one pipe, enabled enhanced shockburst, up to 5 retransmits
@@ -96,11 +93,38 @@ bool NRF_Init(NRF_HandleTypedef* nrf){
 	nrf->crc_ = CRC_ENABLE;
 	nrf->crc_bytes_ = CRCB_ONE;
 	nrf->address_width_ = ADR_THREE;
-	nrf->ack_ = AA_ON;
 	nrf->retransmissions_ = ARC_TEN;
 	nrf->ret_delay_ = DELAY_2000uS;
-}
 
+	if(!NRF_SET_RadioParams(nrf->rate_, nrf->power_amp_, nrf->lna_)){
+		return NRF_ERROR;
+	}
+	if(!NRF_SET_DynamicPayload(nrf->dpl_)){
+		return NRF_ERROR;
+	}
+	if(!NRF_SET_CRC(nrf->crc_, nrf->crc_bytes_)){
+		return NRF_ERROR;
+	}
+	if(!NRF_SET_PipeAddressWidth(nrf->address_width_)){
+		return NRF_ERROR;
+	}
+	if(!NRF_SET_Retransmission(nrf->ret_delay_,  nrf->retransmissions_)){
+		return NRF_ERROR;
+	}
+	// flush fifos
+	if(!NRF_FlushTXFifo()){
+		return NRF_ERROR;
+	}
+	if(!NRF_FlushRXFifo()){
+		return NRF_ERROR;
+	}
+
+	// clear irq flags
+	if(!NRF_ClearIRQFlags()){
+		return NRF_ERROR;
+	}
+	return NRF_OK;
+}
 /*
  * @brief sets air data rate, power amplifier for tx, and lna for rx
  * @param[in] rate : data rate
@@ -131,7 +155,6 @@ bool NRF_SET_RadioParams(NRF_AirDataRate rate, NRF_PowerAmplifier amp, NRF_LNAse
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_Frequency(NRF_Frequency freq){
 	uint8_t safe_freq = freq & NRF_MASK_RF_CH;
 	if(!NRF_WriteRegs(NRF_REG_RF_CH, &safe_freq, 1)){
@@ -139,6 +162,7 @@ bool NRF_SET_Frequency(NRF_Frequency freq){
 	}
 	return NRF_OK;
 }
+
 /*
  * @brief sets mode to rx or tx
  * @param[in] mode : some enum
@@ -146,7 +170,6 @@ bool NRF_SET_Frequency(NRF_Frequency freq){
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_Mode(NRF_Mode mode){
 	uint8_t reg;
 	if(!NRF_ReadRegs(NRF_REG_CONFIG, &reg, 1)){
@@ -161,13 +184,32 @@ bool NRF_SET_Mode(NRF_Mode mode){
 }
 
 /*
+ * @brief sets power mode to power up or power down
+ * @param[in] mode : some enum
+ *
+ * @return nothing
+ * @retval 1 if successfully set, 0 if something went wrong
+ */
+bool NRF_SET_PowerMode(NRF_PowerMode pwr){
+	uint8_t reg;
+	if(!NRF_ReadRegs(NRF_REG_CONFIG, &reg, 1)){
+		return NRF_ERROR;
+	}
+	reg &= ~NRF_MASK_PWR_MODE;		// sets bit to 0
+	reg |= pwr << 1;
+	if(!NRF_WriteRegs(NRF_REG_CONFIG, &reg, 1)){
+		return NRF_ERROR;
+	}
+	return NRF_OK;
+}
+
+/*
  * @brief sets mode to rx or tx
  * @param[in] mode : some enum
  *
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_DynamicPayload(NRF_DynamicPayload dpl){
 	uint8_t reg;
 	if(!NRF_ReadRegs(NRF_REG_FEATURE, &reg, 1)){
@@ -189,7 +231,6 @@ bool NRF_SET_DynamicPayload(NRF_DynamicPayload dpl){
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_CRC(NRF_CRC crc, NRF_CRCbytes bytes){
 	uint8_t reg;
 	if(!NRF_ReadRegs(NRF_REG_CONFIG, &reg, 1)){
@@ -211,7 +252,6 @@ bool NRF_SET_CRC(NRF_CRC crc, NRF_CRCbytes bytes){
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_PipeAddressWidth(NRF_AddressWidth width){
 	uint8_t safe_width = width & NRF_MASK_AW;
 	if(!NRF_WriteRegs(NRF_REG_SETUP_AW, &safe_width, 1)){
@@ -228,7 +268,6 @@ bool NRF_SET_PipeAddressWidth(NRF_AddressWidth width){
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_Retransmission(NRF_RetransmitDelay ard, NRF_RetransmitCount arc){
 	uint8_t retransmit_data = (ard << 4) | arc;
 	if(!NRF_WriteRegs(NRF_REG_SETUP_RETR, &retransmit_data, 1)){
@@ -245,7 +284,6 @@ bool NRF_SET_Retransmission(NRF_RetransmitDelay ard, NRF_RetransmitCount arc){
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_PipeAddress(NRF_Pipe pipe, uint8_t* address){
 	uint8_t address_width;
 	if(!NRF_ReadRegs(NRF_REG_SETUP_AW, &address_width, 1)){
@@ -286,7 +324,6 @@ bool NRF_SET_PipeAddress(NRF_Pipe pipe, uint8_t* address){
  * @return nothing
  * @retval 1 if successfully set, 0 if something went wrong
  */
-
 bool NRF_SET_PipeRX(NRF_Pipe pipe, NRF_AutoAcknowledge auto_ack, uint8_t payload_length){
 	// enable pipe
 	uint8_t pipe_en;
@@ -298,6 +335,7 @@ bool NRF_SET_PipeRX(NRF_Pipe pipe, NRF_AutoAcknowledge auto_ack, uint8_t payload
 	if(!NRF_WriteRegs(NRF_REG_EN_RXADDR, &pipe_en, 1)){
 		return NRF_ERROR;
 	}
+
 
 	// set auto acknowledge
 	uint8_t aa_en;
@@ -318,7 +356,82 @@ bool NRF_SET_PipeRX(NRF_Pipe pipe, NRF_AutoAcknowledge auto_ack, uint8_t payload
 
 	// if everything passed return ok
 	return NRF_OK;
+}
 
+
+/*
+ * @brief disable pipe and set aa for it in transmitter
+ * @param[in] pipe : number of pipe (used for base address of pipes)
+ * @param[in] auto_ack : enable enhanced shockburst for given pipe
+ *
+ * @return nothing
+ * @retval 1 if successfully set, 0 if something went wrong
+ */
+bool NRF_SET_PipeTX(NRF_Pipe pipe, NRF_AutoAcknowledge auto_ack){
+//	// disable pipe
+//	uint8_t pipe_en;
+//	if(!NRF_ReadRegs(NRF_REG_EN_RXADDR, &pipe_en, 1)){
+//		return NRF_ERROR;
+//	}
+//	pipe_en &= ~(NRF_MASK_EN_BASE << pipe);
+//	if(!NRF_WriteRegs(NRF_REG_EN_RXADDR, &pipe_en, 1)){
+//		return NRF_ERROR;
+//	}
+	// enable pipe
+		uint8_t pipe_en;
+		if(!NRF_ReadRegs(NRF_REG_EN_RXADDR, &pipe_en, 1)){
+			return NRF_ERROR;
+		}
+		pipe_en &= ~(NRF_MASK_EN_BASE << pipe);
+		pipe_en |= 1 << pipe;
+		if(!NRF_WriteRegs(NRF_REG_EN_RXADDR, &pipe_en, 1)){
+			return NRF_ERROR;
+		}
+
+	// set auto acknowledge
+	uint8_t aa_en;
+	if(!NRF_ReadRegs(NRF_REG_EN_AA, &aa_en, 1)){
+		return NRF_ERROR;
+	}
+	aa_en &= ~(NRF_MASK_EN_BASE << pipe);
+	aa_en |= 1 << pipe;
+	if(!NRF_WriteRegs(NRF_REG_EN_AA, &aa_en, 1)){
+		return NRF_ERROR;
+	}
+
+	// if everything passed return ok
+	return NRF_OK;
+}
+
+/*
+ * @brief get number of rx pipe ready to read from
+ * @param[in] pipe : pointer to pipe variable
+ *
+ * @return nothing
+ * @retval 1 if successfully get, 0 if something went wrong
+ */
+bool NRF_GET_PipeNumber(uint8_t* pipe){
+	uint8_t status_reg = 0;
+	if(!NRF_ReadRegs(NRF_REG_STATUS, &status_reg, 1)){
+		return NRF_ERROR;
+	}
+	*pipe = (status_reg & NRF_MASK_RX_P_NO) >> 1;
+	return NRF_OK;
+}
+
+/*
+ * @brief get length of payload for given pipe
+ * @param[in] pipe : pipe number
+ *
+ * @return nothing
+ * @retval 1 if successfully get, 0 if something went wrong
+ */
+bool NRF_GET_PayloadLength(uint8_t pipe, uint8_t* length){
+	if(!NRF_ReadRegs(NRF_REG_RX_PW_BASE+pipe, length, 1)){
+		return NRF_ERROR;
+	}
+	*length &= NRF_MASK_RX_PW_P;
+	return NRF_OK;
 }
 
 /*
@@ -327,12 +440,13 @@ bool NRF_SET_PipeRX(NRF_Pipe pipe, NRF_AutoAcknowledge auto_ack, uint8_t payload
  * @return nothing
  * @retval 1 if successfully flushed, 0 if something went wrong
  */
-
 bool NRF_FlushRXFifo(void){
 	uint8_t rx_buff = 0;
+	NRF_CSN_SET_LOW;
 	if(!NRF_SPI_RW(NRF_CMD_FLUSH_RX, &rx_buff)){
 		return NRF_ERROR;
 	}
+	NRF_CSN_SET_HIGH;
 	return NRF_OK;
 }
 
@@ -342,7 +456,6 @@ bool NRF_FlushRXFifo(void){
  * @return nothing
  * @retval 1 if successfully flushed, 0 if something went wrong
  */
-
 bool NRF_FlushTXFifo(void){
 	uint8_t rx_buff = 0;
 	NRF_CSN_SET_LOW;
@@ -361,15 +474,14 @@ bool NRF_FlushTXFifo(void){
  * @return nothing
  * @retval 1 if successfully written, 0 if something went wrong
  */
-
-bool NRF_ReadWritePayload(uint8_t* data, uint8_t length){
+bool NRF_WriteTxPayload(uint8_t* data, uint8_t length){
 	uint8_t rx_buff = 0;
 	NRF_CSN_SET_LOW;
 	if(!NRF_SPI_RW(NRF_CMD_W_TX_PAYLOAD, &rx_buff)){
 		return NRF_ERROR;
 	}
 	while(length--){
-		if(!NRF_SPI_RW(*data, rx_buff)){
+		if(!NRF_SPI_RW(*data, &rx_buff)){
 			return NRF_ERROR;
 		}
 		data++;
@@ -386,8 +498,6 @@ bool NRF_ReadWritePayload(uint8_t* data, uint8_t length){
  * @return nothing
  * @retval 1 if successfully read, 0 if something went wrong
  */
-
-
 bool NRF_ReadRxPayload(uint8_t* data, uint8_t length){
 	uint8_t rx_buff = 0;
 	NRF_CSN_SET_LOW;
@@ -395,7 +505,7 @@ bool NRF_ReadRxPayload(uint8_t* data, uint8_t length){
 		return NRF_ERROR;
 	}
 	while(length--){
-		if(!NRF_SPI_RW(NOP, data)){
+		if(!NRF_SPI_RW(NRF_CMD_NOP, data)){
 			return NRF_ERROR;
 		}
 		data++;
@@ -410,7 +520,6 @@ bool NRF_ReadRxPayload(uint8_t* data, uint8_t length){
  * @return nothing
  * @retval 1 if successfully cleared, 0 if something went wrong
  */
-
 bool NRF_ClearIRQFlags(void){
 	uint8_t status_reg;
 	if(!NRF_ReadRegs(NRF_REG_STATUS, &status_reg, 1)){
@@ -426,24 +535,111 @@ bool NRF_ClearIRQFlags(void){
 }
 
 /*
- * @brief set flag to signalize interrupt occurence
- * @param[in] nrfInterruptFlag : pointer to global flag indicating interrupt state
- * @return nothing
- * @retval nothing
- */
-
-void NRF_IRQ_Event(uint8_t* nrfInterruptFlag){
-	*nrfInterrupt = 1;
-}
-
-/*
- * @brief reads interrupt source and
+ * @brief reads interrupt source and starts appropriate handler
  * @param[in] nrfInterruptFlag : pointer to global flag indicating interrupt state
  *
  * @return nothing
  * @retval nothing
  */
+bool NRF_IRQ_Callback(uint8_t* nrfInterrupt, uint8_t* data_buffer){
 
-bool NRF_IRQ_Handler(uint8_t* nrfInterrupt){
+	if(*nrfInterrupt){
 
+		uint8_t status_reg = 0;
+
+		if(!NRF_ReadRegs(NRF_REG_STATUS, &status_reg, 1)){
+			return NRF_ERROR;
+		}
+		// if flag is high, run one of handlers
+		if(NRF_MASK_RX_DR & status_reg){
+			// interrupt: data ready rx fifo
+			if(!NRF_IRQ_RxHandler(data_buffer)){
+				return NRF_ERROR;
+			}
+		}
+		else if(NRF_MASK_TX_DS & status_reg){
+			// interrupt: data sent tx fifo
+			if(!NRF_IRQ_TxHandler()){
+				return NRF_ERROR;
+			}
+		}
+		else if(NRF_MASK_MAX_RT & status_reg){
+			// interrupt : max no of retransmissions
+			if(!NRF_IRQ_MaxHandler()){
+				return NRF_ERROR;
+			}
+		}
+		return NRF_OK;
+	}
+	else{
+		// somehow this was called without flag raised, so call error
+		return NRF_ERROR;
+	}
+
+}
+
+/*
+ * @brief handle rx interrupt
+ * @param[in] data_buffer : pointer to buffer to read data into
+ *
+ * @return nothing
+ * @retval nothing
+ */
+bool NRF_IRQ_RxHandler(uint8_t* data_buffer){
+	//get pipe number
+	uint8_t pipe = 0x07; //sets as empty rx
+	if(!NRF_GET_PipeNumber(&pipe)){
+		return NRF_ERROR;
+	}
+
+	//get length
+	uint8_t length = 0;
+	if(!NRF_GET_PayloadLength(pipe, &length)){
+		return NRF_ERROR;
+	}
+
+	//read data
+	if(!NRF_ReadRxPayload(data_buffer, length)){
+		return NRF_ERROR;
+	}
+
+	// deassert IRQ pin; my code supports
+	// only one interrupt at a time, so I can clear all flags
+	if(!NRF_ClearIRQFlags()){
+		return NRF_ERROR;
+	}
+	return NRF_OK;
+}
+
+/*
+ * @brief handle tx interrupt
+ *
+ * @return nothing
+ * @retval nothing
+ */
+bool NRF_IRQ_TxHandler(void){
+	// this only deasserts irq flags
+	if(!NRF_ClearIRQFlags()){
+		return NRF_ERROR;
+	}
+	return NRF_OK;
+}
+
+/*
+ * @brief handle max interrupt
+ *
+ * @return nothing
+ * @retval nothing
+ */
+bool NRF_IRQ_MaxHandler(void){
+	// clear fifo and deassert pin
+	// this config simply discards packet
+	if(!NRF_FlushTXFifo()){
+		return NRF_ERROR;
+	}
+
+	if(!NRF_ClearIRQFlags()){
+		return NRF_ERROR;
+	}
+	return NRF_OK;
 }

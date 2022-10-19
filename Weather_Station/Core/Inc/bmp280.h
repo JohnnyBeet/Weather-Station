@@ -38,7 +38,6 @@ typedef enum{
  * names taken from documentation
  * TODO: check if they change during sensor being active
  */
-
 typedef struct {
 	uint16_t dig_T1;
 	int16_t dig_T2;
@@ -58,7 +57,6 @@ typedef struct {
  * Enum for holding time standby values. Only used for normal mode.
  * Naming convention : BMP280_tsb_x_y where x is time in ms, and y is decimal part of the time
  */
-
 typedef enum{
 	BMP280_tsb_0_5 = 0,
 	BMP280_tsb_62_5 = 1,
@@ -73,7 +71,6 @@ typedef enum{
 /*
  * Enum for iir filter coefficients.
  */
-
 typedef enum {
     BMP280_FILTER_OFF = 0,
     BMP280_FILTER_2 = 1,
@@ -85,7 +82,6 @@ typedef enum {
 /*
  * Enum for oversampling (it's the same for both temperature and pressure)
  */
-
 typedef enum{
 	BMP280_skipped = 0,
 	BMP280_oversampling_x1 = 1,
@@ -98,7 +94,6 @@ typedef enum{
 /*
  * BMP280 handle, used to store configuration
  */
-
 typedef struct{
 	I2C_HandleTypeDef* i2c_handle_;
 	BMP280_Address address_;
@@ -113,19 +108,16 @@ typedef struct{
 /*
  * #TODO: comment
  */
-
 bool bmp280_read_reg16(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint16_t* reg_contents);
 
 /*
  * #TODO: comment
  */
-
 bool bmp280_read_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* reg_contents);
 
 /*
  * #TODO: comment
  */
-
 bool bmp280_write_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* reg_contents);
 
 /*
@@ -134,7 +126,6 @@ bool bmp280_write_reg8(BMP280_HandleTypedef* bmp, uint8_t reg_address, uint8_t* 
  *
  * @return None
  */
-
 bool bmp280_get_compensation_data(BMP280_HandleTypedef* bmp);
 
 /* TODO: fix
@@ -145,7 +136,6 @@ bool bmp280_get_compensation_data(BMP280_HandleTypedef* bmp);
  *
  * @return None
  */
-
 bool bmp280_init_force_mode(BMP280_HandleTypedef* bmp);
 
 /*
@@ -155,7 +145,6 @@ bool bmp280_init_force_mode(BMP280_HandleTypedef* bmp);
  * @return 0 or 1
  * @retval 0 if measurement hasn't ended, 1 if measurement has ended
  */
-
 bool bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
 
 /*
@@ -165,19 +154,16 @@ bool bmp280_has_measurement_ended(BMP280_HandleTypedef* bmp);
  * @return None
  * @retval Doesn't return anything, other function used for extracting data from registers
  */
-
 bool bmp280_force_measurement(BMP280_HandleTypedef* bmp);
 
 /*
  * TODO
  */
-
 int32_t bmp280_compensate_T_int32(BMP280_HandleTypedef* bmp, int32_t adc_T);
 
 /*
  *
  */
-
 uint32_t bmp280_compensate_P_int64(BMP280_HandleTypedef* bmp, int32_t adc_P);
 
 /*
@@ -189,7 +175,6 @@ uint32_t bmp280_compensate_P_int64(BMP280_HandleTypedef* bmp, int32_t adc_P);
  * @return None
  * @retval Properly read values of temp & press or will call an error handler
  */
-
 bool bmp280_get_measurements(BMP280_HandleTypedef* bmp280,
 			uint32_t* raw_pressure, int32_t* raw_temperature);
 

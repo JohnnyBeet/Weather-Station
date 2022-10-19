@@ -1,0 +1,3 @@
+../Core/Src/am2320.c:11:22:am2320_init	56	static
+../Core/Src/am2320.c:23:10:am2320_crc_checker	24	static
+../Core/Src/am2320.c:46:6:am2320_read_temperature_and_humidity	40	static

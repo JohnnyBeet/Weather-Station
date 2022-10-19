@@ -77,6 +77,8 @@ int __io_putchar(int ch)
 
   return 1;
 }
+
+static bool NRF_Transmit(uint8_t* data, uint8_t length);
 /* USER CODE END 0 */
 
 /**
@@ -113,22 +115,53 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
-  AM2320_HandleTypeDef am2320 = am2320_init(&hi2c1, AM2320_ADDRESS);
+//  AM2320_HandleTypeDef am2320 = am2320_init(&hi2c1, AM2320_ADDRESS);
 
   BMP280_HandleTypedef bmp280;
   bmp280.i2c_handle_ = &hi2c3;
   bmp280_init_force_mode(&bmp280);
 
-  uint8_t data[1];
-  NRF_ReadRegs(NRF_REG_CONFIG, data, 1);
-  printf("CONFIG: %d\n", data[0]);
-  HAL_Delay(200);
-  uint8_t w_data[1] = {(uint8_t)12};
-  NRF_WriteRegs(NRF_REG_CONFIG, w_data, 1);
-  HAL_Delay(200);
-  NRF_ReadRegs(NRF_REG_CONFIG, data, 1);
-  printf("CONFIG after write: %d\n", data[0]);
+  uint8_t status = 0;
 
+  // initialize nrf handle
+  NRF_HandleTypedef nrf;
+  if(!NRF_Init(&nrf)){
+	  Error_Handler();
+  }
+	 NRF_ReadRegs(NRF_REG_STATUS, &status, 1);
+	 printf("STATUS: %d%d%d%d%d%d%d%d\n", (status>>7) & 1, (status>>6) & 1, (status>>5) & 1,
+		(status>>4) & 1, (status>>3) & 1, (status>>2) & 1, (status>>1) & 1, (status) & 1);
+
+  // pipe configuration
+  // address will be clocked from last to first
+  // need to clock same address for rx and tx pipe for transmitter
+  static uint8_t nrf_addr[] = {'N', 'R', 'F'};
+  if(!NRF_SET_PipeAddress(RX_PIPE_0, nrf_addr)){
+	  return NRF_ERROR;
+  }
+  if(!NRF_SET_PipeAddress(TX_PIPE, nrf_addr)){
+	  return NRF_ERROR;
+  }
+
+  // prepare pipe
+  if(!NRF_SET_PipeTX(RX_PIPE_0, AA_ON)){
+	  return NRF_ERROR;
+  }
+
+  // set mode to transmitter
+  if(!NRF_SET_Mode(TX)){
+	  return NRF_ERROR;
+  }
+
+  // turn transmitter on and wait for at least 1.5 ms
+  if(!NRF_SET_PowerMode(PWR_UP)){
+	  return NRF_ERROR;
+  }
+
+  HAL_Delay(2);
+
+  // test payload
+  uint8_t payload[] = {'S','E','N','D',' ','O','K'};
 
 
   /* USER CODE END 2 */
@@ -146,9 +179,28 @@ int main(void)
 //	  bmp280_get_measurements(&bmp280, &bmp280_press, &bmp280_temp);
 //	  printf("Temperature: %d.%d\nPressure: %.3f\n", (int)(bmp280_temp/100), (int)(bmp280_temp%100),
 //			  (float)bmp280_press/25600.);
-	  printf("cos\n");
 //	  printf("Read data from register CONFIG: %d\n", data[0]);
-	  HAL_Delay(2000);
+	  int timeout = 10000;
+//	  printf("Payload: SEND OK\n");
+	  NRF_Transmit(payload, (uint8_t)7);
+	  if(nrfInterrupt){
+		  uint8_t interrupt_src = 0;
+		  NRF_ReadRegs(NRF_REG_STATUS, &interrupt_src, 1);
+		  uint8_t rx = (interrupt_src & 0x40) >> 6;
+		  uint8_t tx = (interrupt_src & 0x20) >> 5;
+		  uint8_t max = (interrupt_src & 0x10) >> 4;
+		  printf("Interrupts:\nRx: %d\nTx: %d\nMax: %d\n", rx, tx, max);
+		  NRF_IRQ_Callback(&nrfInterrupt, &interrupt_src);
+	  }
+	  HAL_Delay(5000);
+//	  printf("Waiting for interrupt...\n");
+//	  while(!nrfInterrupt && timeout){
+//		  HAL_Delay(1);
+//		  timeout--;
+//	  }
+//	  if(!timeout) printf("Timed out!\n");
+//	  else printf("Transmission successful!\n");
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -293,7 +345,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -388,10 +440,36 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == NRF_IRQ_Pin){
+		// if interrupt comes from IRQ pin, then set flag
+		nrfInterrupt = 1;
+	}
+}
 
+static bool NRF_Transmit(uint8_t* data, uint8_t length){
+	// set nrf high to go from standby 1 to tx setting mode
+		NRF_CE_SET_HIGH;
+
+	// write tx payload
+	if(!NRF_WriteTxPayload(data, length)){
+		return NRF_ERROR;
+	}
+
+	// wait 1000us for a good measure
+//	HAL_Delay(1);
+
+	//deassert ce pin
+	NRF_CE_SET_LOW;
+	return NRF_OK;
+}
 /* USER CODE END 4 */
 
 /**
