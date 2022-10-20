@@ -123,9 +123,6 @@ int main(void)
   MX_I2C1_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t status = 0;
-  	 NRF_ReadRegs(NRF_REG_CONFIG, &status, 1);
-  	 printf("STATUS as decimal: %d\n", status);
 
   NRF_HandleTypedef nrf;
   if(!NRF_Init(&nrf)){
@@ -135,7 +132,7 @@ int main(void)
   // pipe configuration
   // address will be clocked from last to first
   // need to clock the same address as for transmitter
-  static uint8_t nrf_addr[] = {'N', 'R', 'F'};
+  static uint8_t nrf_addr[] = {0x69, 0x21, 0x37};
   if(!NRF_SET_PipeAddress(RX_PIPE_0, nrf_addr)){
 	  return NRF_ERROR;
   }
@@ -154,7 +151,7 @@ int main(void)
 	  return NRF_ERROR;
   }
   HAL_Delay(2);
-
+  NRF_PrintConfig();
   // put receiver in rx mode by enabling CE pin
   NRF_CE_SET_HIGH;
 
@@ -180,10 +177,6 @@ int main(void)
 //	else{
 //		printf("Receiver not working!\n");
 //	}
-	  NRF_ReadRegs(NRF_REG_EN_AA, &status, 1);
-	    	 printf("Status as decimal: %d\n", status);
-	    	 NRF_ReadRegs(NRF_REG_EN_RXADDR, &status, 1);
-	    	   	 printf("config as decimal: %d\n", status);
 	  if(nrfInterrupt){
 	  		  uint8_t interrupt_src = 0;
 	  		  NRF_ReadRegs(NRF_REG_STATUS, &interrupt_src, 1);
@@ -191,7 +184,12 @@ int main(void)
 	  		  uint8_t tx = (interrupt_src & 0x20) >> 5;
 	  		  uint8_t max = (interrupt_src & 0x10) >> 4;
 	  		  printf("Interrupts:\nRx: %d\nTx: %d\nMax: %d\n", rx, tx, max);
-	  		  NRF_IRQ_Callback(&nrfInterrupt, &interrupt_src);
+	  		  NRF_IRQ_Callback(&nrfInterrupt, data_buffer);
+	  		  printf("Message: ");
+	  		  for(int i =0; i <7; i++){
+	  			  printf("%c", data_buffer[i]);
+	  		  }
+	  		  printf("\n");
 	  	  }
 	HAL_Delay(5000);
 

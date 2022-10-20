@@ -99,12 +99,20 @@ bool NRF_Init(NRF_HandleTypedef* nrf){
 	if(!NRF_SET_RadioParams(nrf->rate_, nrf->power_amp_, nrf->lna_)){
 		return NRF_ERROR;
 	}
+	if(!NRF_SET_Frequency(nrf->frequency_)){
+		return NRF_ERROR;
+	}
 	if(!NRF_SET_DynamicPayload(nrf->dpl_)){
 		return NRF_ERROR;
 	}
 	if(!NRF_SET_CRC(nrf->crc_, nrf->crc_bytes_)){
 		return NRF_ERROR;
 	}
+//	uint8_t reg=0;
+//		NRF_ReadRegs(NRF_REG_RF_SETUP, &reg, 1);
+//		printf("RF_SETUP: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+//				(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
 	if(!NRF_SET_PipeAddressWidth(nrf->address_width_)){
 		return NRF_ERROR;
 	}
@@ -238,7 +246,7 @@ bool NRF_SET_CRC(NRF_CRC crc, NRF_CRCbytes bytes){
 	}
 	reg &= ~NRF_MASK_CRC;		// sets bits to 0
 	reg |= ((crc << 3) | (bytes << 2));
-	if(!NRF_WriteRegs(NRF_REG_RF_SETUP, &reg, 1)){
+	if(!NRF_WriteRegs(NRF_REG_CONFIG, &reg, 1)){
 		return NRF_ERROR;
 	}
 	return NRF_OK;
@@ -294,6 +302,7 @@ bool NRF_SET_PipeAddress(NRF_Pipe pipe, uint8_t* address){
 		case RX_PIPE_0:
 		case RX_PIPE_1:
 		case TX_PIPE:
+			address_width += 2;
 			// for pipe 0-1 send all three bytes
 			if(!NRF_WriteRegs(NRF_REG_RX_ADDR_BASE + pipe, address, address_width)){
 				return NRF_ERROR;
@@ -350,7 +359,7 @@ bool NRF_SET_PipeRX(NRF_Pipe pipe, NRF_AutoAcknowledge auto_ack, uint8_t payload
 
 	// set payload length (used when dpl is disabled)
 	uint8_t safe_pl_len = NRF_MASK_RX_PW_P & payload_length;
-	if(!NRF_WriteRegs(NRF_REG_EN_AA, &safe_pl_len, 1)){
+	if(!NRF_WriteRegs(NRF_REG_RX_PW_BASE+pipe, &safe_pl_len, 1)){
 		return NRF_ERROR;
 	}
 
@@ -642,4 +651,86 @@ bool NRF_IRQ_MaxHandler(void){
 		return NRF_ERROR;
 	}
 	return NRF_OK;
+}
+
+/*
+ * comment properly
+ */
+bool NRF_ResetPlos(){
+	uint8_t rf_ch_reg = 0;
+	if(!NRF_ReadRegs(NRF_REG_RF_CH, &rf_ch_reg, 1)){
+		return NRF_ERROR;
+	}
+	if(!NRF_WriteRegs(NRF_REG_RF_CH, &rf_ch_reg, 1)){
+		return NRF_ERROR;
+	}
+	return NRF_OK;
+}
+
+/*
+ * debug dump fuction, prints registers in readable format
+ */
+
+void NRF_PrintConfig(){
+	uint8_t reg = 0;
+	NRF_ReadRegs(NRF_REG_CONFIG, &reg, 1);
+	printf("CONFIG: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_EN_AA, &reg, 1);
+	printf("EN_AA: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_EN_RXADDR, &reg, 1);
+	printf("EN_RXADDR: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_SETUP_AW, &reg, 1);
+	printf("SETUP_AW: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_SETUP_RETR, &reg, 1);
+	printf("SETUP_RETR: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_RF_CH, &reg, 1);
+	printf("RF_CH: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_RF_SETUP, &reg, 1);
+	printf("RF_SETUP: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_STATUS, &reg, 1);
+	printf("STATUS: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_OBSERVE_TX, &reg, 1);
+	printf("OBSERVE_TX: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	uint8_t address[6];
+	for(int i=0; i<6; i++){
+		NRF_ReadRegs(NRF_REG_RX_ADDR_BASE+i, address, 6);
+		printf("RX_ADDR_P%d: 0x%X%X%X%X%X%X\n", i, address[0], address[1], address[2], address[3], address[4], address[5]);
+	}
+	NRF_ReadRegs(NRF_REG_TX_ADDR, address, 6);
+	printf("RX_ADDR_TX: 0x%X%X%X%X%X%X\n", address[0], address[1], address[2], address[3], address[4], address[5]);
+
+	for(int i=0; i<6; i++){
+		NRF_ReadRegs(NRF_REG_RX_PW_BASE+i, &reg, 1);
+		printf("RX_PW_P%d: %d%d%d%d%d%d%d%d\n",i, (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+				(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+	}
+	NRF_ReadRegs(NRF_REG_FIFO_STATUS, &reg, 1);
+	printf("FIFO_STATUS: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_DYNPD, &reg, 1);
+	printf("DYNPD: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+
+	NRF_ReadRegs(NRF_REG_FEATURE, &reg, 1);
+	printf("FEATURE: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
 }

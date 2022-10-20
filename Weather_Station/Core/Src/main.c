@@ -78,7 +78,14 @@ int __io_putchar(int ch)
   return 1;
 }
 
-static bool NRF_Transmit(uint8_t* data, uint8_t length);
+typedef enum {
+    nRF24_TX_ERROR  = (uint8_t)0x00, // Unknown error
+    nRF24_TX_SUCCESS,                // Packet has been transmitted successfully
+    nRF24_TX_TIMEOUT,                // It was timeout during packet transmit
+    nRF24_TX_MAXRT                   // Transmit failed with maximum auto retransmit count
+} nRF24_TXResult;
+
+static nRF24_TXResult NRF_Transmit(uint8_t* data, uint8_t length);
 /* USER CODE END 0 */
 
 /**
@@ -128,14 +135,10 @@ int main(void)
   if(!NRF_Init(&nrf)){
 	  Error_Handler();
   }
-	 NRF_ReadRegs(NRF_REG_STATUS, &status, 1);
-	 printf("STATUS: %d%d%d%d%d%d%d%d\n", (status>>7) & 1, (status>>6) & 1, (status>>5) & 1,
-		(status>>4) & 1, (status>>3) & 1, (status>>2) & 1, (status>>1) & 1, (status) & 1);
-
   // pipe configuration
   // address will be clocked from last to first
   // need to clock same address for rx and tx pipe for transmitter
-  static uint8_t nrf_addr[] = {'N', 'R', 'F'};
+  static uint8_t nrf_addr[] = {0x69, 0x21, 0x37};
   if(!NRF_SET_PipeAddress(RX_PIPE_0, nrf_addr)){
 	  return NRF_ERROR;
   }
@@ -143,7 +146,12 @@ int main(void)
 	  return NRF_ERROR;
   }
 
-  // prepare pipe
+  // preapre pipe RX 0 for auto ack
+  if(!NRF_SET_PipeRX(RX_PIPE_0, AA_ON, 0)){
+	  return NRF_ERROR;
+  }
+
+  // prepare pipe TX
   if(!NRF_SET_PipeTX(RX_PIPE_0, AA_ON)){
 	  return NRF_ERROR;
   }
@@ -159,10 +167,9 @@ int main(void)
   }
 
   HAL_Delay(2);
-
+  NRF_PrintConfig();
   // test payload
-  uint8_t payload[] = {'S','E','N','D',' ','O','K'};
-
+  uint8_t payload[] = {'S','E','N','D','_','O','K'};
 
   /* USER CODE END 2 */
 
@@ -182,15 +189,24 @@ int main(void)
 //	  printf("Read data from register CONFIG: %d\n", data[0]);
 	  int timeout = 10000;
 //	  printf("Payload: SEND OK\n");
-	  NRF_Transmit(payload, (uint8_t)7);
-	  if(nrfInterrupt){
-		  uint8_t interrupt_src = 0;
-		  NRF_ReadRegs(NRF_REG_STATUS, &interrupt_src, 1);
-		  uint8_t rx = (interrupt_src & 0x40) >> 6;
-		  uint8_t tx = (interrupt_src & 0x20) >> 5;
-		  uint8_t max = (interrupt_src & 0x10) >> 4;
-		  printf("Interrupts:\nRx: %d\nTx: %d\nMax: %d\n", rx, tx, max);
-		  NRF_IRQ_Callback(&nrfInterrupt, &interrupt_src);
+	  nRF24_TXResult tx_res = NRF_Transmit(payload, (uint8_t)7);
+	  switch (tx_res) {
+		  case nRF24_TX_SUCCESS:
+			  printf("OK\n");
+			  break;
+		  case nRF24_TX_TIMEOUT:
+			  printf("TIMEOUT\n");
+			  break;
+		  case nRF24_TX_MAXRT:
+			  printf("MAX RETRANSMIT\n");
+			  NRF_ResetPlos();
+			  NRF_FlushTXFifo();
+			  NRF_ReadRegs(NRF_REG_STATUS, &status, 1);
+			  printf("STATUS: %d\n", status);
+			  break;
+		  default:
+			  printf("ERROR\n");
+			  break;
 	  }
 	  HAL_Delay(5000);
 //	  printf("Waiting for interrupt...\n");
@@ -454,21 +470,52 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	}
 }
 
-static bool NRF_Transmit(uint8_t* data, uint8_t length){
-	// set nrf high to go from standby 1 to tx setting mode
-		NRF_CE_SET_HIGH;
+static nRF24_TXResult NRF_Transmit(uint8_t* data, uint8_t length){
+	uint8_t status = 0;
+	uint32_t wait = 0xFFFF;
+	NRF_CE_SET_LOW;
 
 	// write tx payload
 	if(!NRF_WriteTxPayload(data, length)){
 		return NRF_ERROR;
 	}
 
-	// wait 1000us for a good measure
-//	HAL_Delay(1);
+	NRF_CE_SET_HIGH;
+
+	do{
+		NRF_ReadRegs(NRF_REG_STATUS, &status, 1);
+		if (status & (NRF_MASK_TX_DS | NRF_MASK_MAX_RT)) {
+			break;
+		}
+	}while(wait--);
 
 	//deassert ce pin
 	NRF_CE_SET_LOW;
-	return NRF_OK;
+
+	if(!wait){
+		//timeout
+		return NRF_ERROR;
+	}
+
+	printf("Status inside of transmit function: %d\n", status);
+
+	// Clear pending IRQ flags
+	NRF_ClearIRQFlags();
+
+	if (status & NRF_MASK_MAX_RT) {
+		// Auto retransmit counter exceeds the programmed maximum limit (FIFO is not removed)
+		return nRF24_TX_MAXRT;
+	}
+
+	if (status & NRF_MASK_TX_DS) {
+		// Successful transmission
+		return nRF24_TX_SUCCESS;
+	}
+
+	// Some banana happens, a payload remains in the TX FIFO, flush it
+	NRF_FlushTXFifo();
+
+	return nRF24_TX_ERROR;
 }
 /* USER CODE END 4 */
 

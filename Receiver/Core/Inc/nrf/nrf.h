@@ -44,11 +44,13 @@ bool NRF_WriteTxPayload(uint8_t* data, uint8_t length);
 bool NRF_ReadRxPayload(uint8_t* data, uint8_t length);
 bool NRF_ClearIRQFlags(void);
 bool NRF_Init();
+bool NRF_ResetPlos();
 
 /*
  * setters
  */
 bool NRF_SET_RadioParams(NRF_AirDataRate rate, NRF_PowerAmplifier amp, NRF_LNAsetup lna);
+bool NRF_SET_Frequency(NRF_Frequency freq);
 bool NRF_SET_LNAsetup(NRF_LNAsetup lna);
 bool NRF_SET_Mode(NRF_Mode mode);
 bool NRF_SET_PowerMode(NRF_PowerMode pwr);
@@ -77,4 +79,6 @@ bool NRF_IRQ_Callback(uint8_t* nrfInterruptFlag, uint8_t* data_buffer);
 bool NRF_IRQ_RxHandler(uint8_t* data_buffer);
 bool NRF_IRQ_TxHandler(void);
 bool NRF_IRQ_MaxHandler(void);
+
+void NRF_PrintConfig();
 #endif /* INC_NRF_NRF_H_ */
