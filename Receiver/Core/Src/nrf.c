@@ -578,6 +578,7 @@ bool NRF_IRQ_Callback(uint8_t* nrfInterrupt, uint8_t* data_buffer){
 				return NRF_ERROR;
 			}
 		}
+		*nrfInterrupt = 0;
 		return NRF_OK;
 	}
 	else{

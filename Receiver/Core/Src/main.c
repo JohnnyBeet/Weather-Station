@@ -24,6 +24,8 @@
 /* USER CODE BEGIN Includes */
 #include "nrf/nrf.h"
 #include <stdio.h>
+#include "bmp280.h"
+#include "am2320.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,12 +55,23 @@ I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim10;
+
 UART_HandleTypeDef huart3;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
+// nrf interrupt flag
 uint8_t nrfInterrupt = 0;
+
+// bmp measurements variables
+int32_t bmp280_temp;
+uint32_t bmp280_press;
+
+// timer elapsed interrupt flag
+uint8_t timerElapsedFlag = 0;
+uint8_t startMeasFlag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,6 +83,7 @@ static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -122,8 +136,18 @@ int main(void)
   MX_SPI2_Init();
   MX_I2C1_Init();
   MX_I2C2_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim10);
+  // am2320 init
+  AM2320_HandleTypeDef am2320 = am2320_init(&hi2c1, AM2320_ADDRESS);
 
+  // bmp280 init
+  BMP280_HandleTypedef bmp280;
+  bmp280.i2c_handle_ = &hi2c2;
+  bmp280_init_force_mode(&bmp280);
+
+  // nrf init
   NRF_HandleTypedef nrf;
   if(!NRF_Init(&nrf)){
 	  Error_Handler();
@@ -151,47 +175,38 @@ int main(void)
 	  return NRF_ERROR;
   }
   HAL_Delay(2);
-  NRF_PrintConfig();
+//  NRF_PrintConfig();
   // put receiver in rx mode by enabling CE pin
   NRF_CE_SET_HIGH;
 
   // data buffer
   uint8_t data_buffer[7];
-  uint8_t res = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	if(nrfInterrupt){
-//		res = NRF_IRQ_Callback(&nrfInterrupt, data_buffer);
-//	}
-//	if(res){
-//		printf("Received correctly, printing buffer: ");
-//		for(int i=0; i<7; i++){
-//			printf("%d", data_buffer[i]);
-//		}
-//		printf("\n");
-//	}
-//	else{
-//		printf("Receiver not working!\n");
-//	}
 	  if(nrfInterrupt){
-	  		  uint8_t interrupt_src = 0;
-	  		  NRF_ReadRegs(NRF_REG_STATUS, &interrupt_src, 1);
-	  		  uint8_t rx = (interrupt_src & 0x40) >> 6;
-	  		  uint8_t tx = (interrupt_src & 0x20) >> 5;
-	  		  uint8_t max = (interrupt_src & 0x10) >> 4;
-	  		  printf("Interrupts:\nRx: %d\nTx: %d\nMax: %d\n", rx, tx, max);
-	  		  NRF_IRQ_Callback(&nrfInterrupt, data_buffer);
-	  		  printf("Message: ");
-	  		  for(int i =0; i <7; i++){
-	  			  printf("%c", data_buffer[i]);
-	  		  }
-	  		  printf("\n");
-	  	  }
-	HAL_Delay(5000);
+		  NRF_IRQ_Callback(&nrfInterrupt, data_buffer);
+		  printf("Message: ");
+		  for(int i =0; i <7; i++){
+			  printf("%c", data_buffer[i]);
+		  }
+		  printf("\n");
+	  }
+//	  if(startMeasFlag){
+		  am2320_read_temperature_and_humidity(&am2320);
+		  printf("Temperature: %d.%d\nHumidity: %d.%d\n",
+				  am2320.last_temperature /10, am2320.last_temperature % 10,
+				  am2320.last_humidity / 10, am2320.last_humidity % 10);
+		  bmp280_force_measurement(&bmp280);
+		  bmp280_get_measurements(&bmp280, &bmp280_press, &bmp280_temp);
+		  printf("Temperature: %d.%d\nPressure: %.3f\n", (int)(bmp280_temp/100), (int)(bmp280_temp%100),
+				  (float)bmp280_press/25600.);
+//		  startMeasFlag = 0;
+		  HAL_Delay(5000);
+//	  }
 
     /* USER CODE END WHILE */
 
@@ -218,7 +233,7 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -429,6 +444,37 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+  * @brief TIM10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM10_Init(void)
+{
+
+  /* USER CODE BEGIN TIM10_Init 0 */
+
+  /* USER CODE END TIM10_Init 0 */
+
+  /* USER CODE BEGIN TIM10_Init 1 */
+
+  /* USER CODE END TIM10_Init 1 */
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 42000-1;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 60000-1;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
+  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM10_Init 2 */
+
+  /* USER CODE END TIM10_Init 2 */
+
+}
+
+/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -507,7 +553,6 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -516,10 +561,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD1_Pin|SPI2_CSN_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, SPI2_CSN_Pin|NRF_CE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
@@ -530,25 +575,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD1_Pin SPI2_CSN_Pin LD3_Pin LD2_Pin */
-  GPIO_InitStruct.Pin = LD1_Pin|SPI2_CSN_Pin|LD3_Pin|LD2_Pin;
+  /*Configure GPIO pins : LD1_Pin LD3_Pin LD2_Pin */
+  GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin|LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SPI2_CSN_Pin NRF_CE_Pin */
+  GPIO_InitStruct.Pin = SPI2_CSN_Pin|NRF_CE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : NRF_IRQ_Pin */
   GPIO_InitStruct.Pin = NRF_IRQ_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : NRF_CE_Pin */
-  GPIO_InitStruct.Pin = NRF_CE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(NRF_CE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : USB_PowerSwitchOn_Pin */
   GPIO_InitStruct.Pin = USB_PowerSwitchOn_Pin;
@@ -570,11 +615,21 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// nrf irq pin interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == NRF_IRQ_Pin){
 		// if interrupt comes from IRQ pin, then set flag
 		nrfInterrupt = 1;
 	}
+}
+
+// minute timer interrupt
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	timerElapsedFlag++;
+	if(timerElapsedFlag == 4){
+		startMeasFlag = 1;
+	}
+
 }
 /* USER CODE END 4 */
 

@@ -21,8 +21,8 @@
 ../Core/Src/nrf.c:510:6:NRF_ReadRxPayload	24	static
 ../Core/Src/nrf.c:532:6:NRF_ClearIRQFlags	16	static
 ../Core/Src/nrf.c:553:6:NRF_IRQ_Callback	24	static
-../Core/Src/nrf.c:597:6:NRF_IRQ_RxHandler	24	static
-../Core/Src/nrf.c:632:6:NRF_IRQ_TxHandler	8	static
-../Core/Src/nrf.c:646:6:NRF_IRQ_MaxHandler	8	static
-../Core/Src/nrf.c:662:6:NRF_ResetPlos	16	static
-../Core/Src/nrf.c:677:6:NRF_PrintConfig	64	static
+../Core/Src/nrf.c:598:6:NRF_IRQ_RxHandler	24	static
+../Core/Src/nrf.c:633:6:NRF_IRQ_TxHandler	8	static
+../Core/Src/nrf.c:647:6:NRF_IRQ_MaxHandler	8	static
+../Core/Src/nrf.c:663:6:NRF_ResetPlos	16	static
+../Core/Src/nrf.c:678:6:NRF_PrintConfig	64	static

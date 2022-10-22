@@ -76,13 +76,13 @@ void Error_Handler(void);
 #define RMII_RXD1_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
+#define SPI2_CSN_Pin GPIO_PIN_12
+#define SPI2_CSN_GPIO_Port GPIOE
 #define NRF_IRQ_Pin GPIO_PIN_14
 #define NRF_IRQ_GPIO_Port GPIOE
 #define NRF_IRQ_EXTI_IRQn EXTI15_10_IRQn
 #define NRF_CE_Pin GPIO_PIN_15
 #define NRF_CE_GPIO_Port GPIOE
-#define SPI2_CSN_Pin GPIO_PIN_11
-#define SPI2_CSN_GPIO_Port GPIOB
 #define RMII_TXD1_Pin GPIO_PIN_13
 #define RMII_TXD1_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_14
