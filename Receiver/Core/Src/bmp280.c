@@ -95,7 +95,7 @@ bool bmp280_init_force_mode(BMP280_HandleTypedef* bmp){
 	}
 
 	// check if address is proper
-	if(bmp->address_ != BMP280_ADDRESS_0 && bmp->address_ != BMP280_ADDRESS_1){
+	if(bmp->address_ >> 1 != BMP280_ADDRESS_0 && bmp->address_ != BMP280_ADDRESS_1){
 		return 0;
 	}
 

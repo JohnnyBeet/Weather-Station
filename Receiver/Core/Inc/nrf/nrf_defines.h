@@ -10,7 +10,7 @@
 
 #include "main.h"
 
-extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi3;
 
 /*
  * ERROR CODES

@@ -17,8 +17,8 @@
  * CE: used for switching between rx and tx modes
  */
 
-#define NRF_CSN_SET_HIGH	HAL_GPIO_WritePin(SPI2_CSN_GPIO_Port, SPI2_CSN_Pin, GPIO_PIN_SET)
-#define NRF_CSN_SET_LOW		HAL_GPIO_WritePin(SPI2_CSN_GPIO_Port, SPI2_CSN_Pin, GPIO_PIN_RESET)
+#define NRF_CSN_SET_HIGH	HAL_GPIO_WritePin(SPI3_CSN_GPIO_Port, SPI3_CSN_Pin, GPIO_PIN_SET)
+#define NRF_CSN_SET_LOW		HAL_GPIO_WritePin(SPI3_CSN_GPIO_Port, SPI3_CSN_Pin, GPIO_PIN_RESET)
 #define NRF_CE_SET_HIGH		HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_SET)
 #define NRF_CE_SET_LOW		HAL_GPIO_WritePin(NRF_CE_GPIO_Port, NRF_CE_Pin, GPIO_PIN_RESET)
 

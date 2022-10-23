@@ -9,7 +9,7 @@
 #include "nrf/nrf.h"
 
 uint8_t NRF_SPI_RW(uint8_t transmit_buff, uint8_t* receive_buff){
-	if(HAL_SPI_TransmitReceive(&hspi2, &transmit_buff, receive_buff, 1, 1000) != HAL_OK){
+	if(HAL_SPI_TransmitReceive(&hspi3, &transmit_buff, receive_buff, 1, 1000) != HAL_OK){
 		return NRF_ERROR;
 	}
 	return NRF_OK;
