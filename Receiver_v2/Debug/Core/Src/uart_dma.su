@@ -1,0 +1,5 @@
+../Core/Src/uart_dma.c:13:6:UARTDMA_UartIrqHandler	24	static
+../Core/Src/uart_dma.c:25:6:UARTDMA_DmaIrqHandler	40	static
+../Core/Src/uart_dma.c:75:5:UARTDMA_GetCharFromBuffer	16	static
+../Core/Src/uart_dma.c:86:9:UARTDMA_IsDataReady	16	static
+../Core/Src/uart_dma.c:115:6:UARTDMA_Init	16	static

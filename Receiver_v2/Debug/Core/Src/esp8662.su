@@ -1,0 +1,6 @@
+../Core/Src/esp8662.c:12:16:UART_Send	24	static
+../Core/Src/esp8662.c:22:23:ESP_FindResponse	280	static
+../Core/Src/esp8662.c:46:16:ESP_Init	8	static
+../Core/Src/esp8662.c:87:16:ESP_WiFiConnect	16	static
+../Core/Src/esp8662.c:104:6:ESP_WeatherDataPrepare	24	static
+../Core/Src/esp8662.c:121:16:ESP_SendData	128	dynamic
