@@ -2,7 +2,7 @@
  * esp8662.c
  *
  *  Created on: 22 lis 2022
- *      Author: jasie
+ *      Author: Jan Pomykacz (JohnnyBeet)
  */
 
 #include "esp8662.h"
