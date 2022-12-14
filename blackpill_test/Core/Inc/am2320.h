@@ -4,6 +4,7 @@
  * Edited by: JohnnyBeet
  */
 
+/*
  *Copyright 2019 SimpleMethod
  *
  *Permission is hereby granted, free of charge, to any person obtaining a copy of
