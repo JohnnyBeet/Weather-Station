@@ -49,7 +49,7 @@ typedef enum{
 
 ESP_ERROR_CODE ESP_Init(void);
 ESP_ERROR_CODE ESP_WiFiConnect(const char* wifi_ssid, const char* wifi_pass);
-ESP_ERROR_CODE ESP_SendData(const char* ip_address, WeatherDataToSend* data);
-void ESP_WeatherDataPrepare(WeatherDataToSend* weather_data, RawMeasurements* raw_data);
+ESP_ERROR_CODE ESP_SendData(const char* ip_address, WeatherDataToSend* data, int baseFlag);
+void ESP_WeatherDataPrepare(WeatherDataToSend* weather_data, RawMeasurements* raw_data, int baseFlag);
 
 #endif /* INC_ESP8662_H_ */

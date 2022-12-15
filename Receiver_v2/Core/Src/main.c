@@ -51,6 +51,7 @@ SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim10;
+TIM_HandleTypeDef htim11;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart6;
@@ -71,6 +72,7 @@ uint8_t startMeasFlag = 0;
 // structs for measurements
 RawMeasurements raw_data;
 WeatherDataToSend weather_data;
+static uint8_t thingspeakTimeoutFlag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,6 +86,7 @@ static void MX_SPI2_Init(void);
 static void MX_USART6_UART_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -138,6 +141,7 @@ int main(void)
   MX_USART6_UART_Init();
   MX_TIM10_Init();
   MX_TIM3_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
 	HAL_TIM_Base_Start_IT(&htim10);
@@ -163,7 +167,7 @@ int main(void)
 		return NRF_ERROR;
 	}
 	// prepare pipe
-	if(!NRF_SET_PipeRX(RX_PIPE_0, AA_ON, (uint8_t)7)){
+	if(!NRF_SET_PipeRX(RX_PIPE_0, AA_ON, (uint8_t)12)){
 		return NRF_ERROR;
 	}
 
@@ -180,10 +184,11 @@ int main(void)
 	// put receiver in rx mode by enabling CE pin
 	NRF_CE_SET_HIGH;
 
+//	NRF_PrintConfig();
+
 	UARTDMA_Init(&huartdma, &huart6);
 	ESP_ERROR_CODE ret;
 
-	char ParseBuffer[18];
 	for(int i = 0; i < 5; i++){
 		ret = ESP_Init();
 		if(ret != ESP_OK){
@@ -193,7 +198,7 @@ int main(void)
 			break;
 		}
 	}
-	ret = ESP_WiFiConnect("UPC8001681", "ape7cvyrHk8W"); // cracow
+//	ret = ESP_WiFiConnect("UPC8001681", "ape7cvyrHk8W"); // cracow
 //	ret = ESP_WiFiConnect("FunBox2-4233", "19DA77C9141D6FE165D23F24D3"); // ww
 //	ret = ESP_WiFiConnect("Redmi", "2a4f83f2ce0c"); // phone hotspot
 	for(int i = 0; i < 5; i++){
@@ -209,68 +214,79 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+//	printf("got here\r\n");
+	uint8_t data_buffer[12];
 	while (1)
 	{
-
-//		if(nrfInterrupt){
-//			NRF_IRQ_Callback(&nrfInterrupt, data_buffer);
-//			printf("Message: ");
-//			for(int i =0; i <7; i++){
-//				printf("%c", data_buffer[i]);
-//			}
-//			printf("\n");
-//		}
 		if(startMeasFlag){
-			am2320_read_temperature_and_humidity(&am2320);
-			printf("Temperature: %d.%d\nHumidity: %d.%d\n",
-					am2320.last_temperature /10, am2320.last_temperature % 10,
-					am2320.last_humidity / 10, am2320.last_humidity % 10);
-			bmp280_force_measurement(&bmp280);
-			bmp280_get_measurements(&bmp280, &bmp280_press, &bmp280_temp);
-			printf("Temperature: %d.%d\nPressure: %.3f\n", (int)(bmp280_temp/100), (int)(bmp280_temp%100),
-					(float)bmp280_press/25600.);
+			if(am2320_read_temperature_and_humidity(&am2320)){
+				raw_data.base_am2320_humidity = am2320.last_humidity;
+				raw_data.base_am2320_temperature = am2320.last_temperature;
+			}
+			else{
+				raw_data.base_am2320_humidity = 255;
+				raw_data.base_am2320_temperature = 255;
+			}
+			if(bmp280_force_measurement(&bmp280)){
+				if(bmp280_get_measurements(&bmp280, &bmp280_press, &bmp280_temp)){
+					raw_data.base_bmp280_press = bmp280_press;
+					raw_data.base_bmp280_temp = bmp280_temp;
+				}
+				else{
+					raw_data.base_bmp280_press = 0;
+					raw_data.base_bmp280_temp = 255;
+				}
+			}
+			else{
+				raw_data.base_bmp280_press = 0;
+				raw_data.base_bmp280_temp = 255;
+			}
+			// check if you can send to thingspeak; if yes then send and start 16 sec timer, if no then wait
+			while(thingspeakTimeoutFlag);
+
+			ESP_WeatherDataPrepare(&weather_data, &raw_data, 1);
+			for(int i = 0; i < 5; i++){
+				ret = ESP_SendData("184.106.153.149", &weather_data, 1);
+				if(ret != ESP_OK){
+					HAL_Delay(5000);
+				}
+				else if(ret == ESP_OK){
+					break;
+				}
+			}
+			__HAL_TIM_CLEAR_IT(&htim11, TIM_IT_UPDATE);
+			thingspeakTimeoutFlag = 1;
+			HAL_TIM_Base_Start_IT(&htim11);
 			startMeasFlag = 0;
+		}
+		if(nrfInterrupt){
+			NRF_IRQ_Callback(&nrfInterrupt, data_buffer);
+			raw_data.remote_am2320_temperature = (data_buffer[0]<<8)+data_buffer[1];
+			raw_data.remote_am2320_humidity = (data_buffer[2]<<8)+data_buffer[3];
+			raw_data.remote_bmp280_temp = (data_buffer[4]<<24)+(data_buffer[5]<<16)+(data_buffer[6]<<8)+data_buffer[7];
+			raw_data.remote_bmp280_press = (data_buffer[8]<<24)+(data_buffer[9]<<16)+(data_buffer[10]<<8)+data_buffer[11];
 
 			//prep data
-			raw_data.base_am2320_humidity = am2320.last_humidity;
-			raw_data.base_am2320_temperature = am2320.last_temperature;
-			raw_data.base_bmp280_press = bmp280_press;
-			raw_data.base_bmp280_temp = bmp280_temp;
-			ESP_WeatherDataPrepare(&weather_data, &raw_data);
-			ret = ESP_SendData("184.106.153.149", &weather_data);
-			if(ret != ESP_OK){
-				printf("Erro during sending\r\n");
-			}
-			printf("got here\r\n");
-		}
-		// this worked
-//		uint32_t tickstart = HAL_GetTick();
-//			if(!UART_Send("AT+RST\r\n")){
-//				return ESP_ERROR;
-//			}
-//		//	ESP_WAIT_FOR_RESPONSE
-//			if(!huartdma.dataInFlag){
-//				uint32_t tick = HAL_GetTick();
-//					if(tick - tickstart > 2000) return ESP_TIMEOUT;
-//			}
-		//end this
-//			if(!UARTDMA_CheckForOk(&huartdma)) return ESP_ERROR;
+			ESP_WeatherDataPrepare(&weather_data, &raw_data, 0);
 
-//		  if(UARTDMA_IsDataReady(&huartdma))
-//		  {
-//		    UARTDMA_GetLineFromBuffer(&huartdma, ParseBuffer);
-//		    if(strcmp(ParseBuffer, "OK") == 0)
-//		    {
-//		      printf("Received ON\r\n");
-//		    }
-//		    else if(strcmp(ParseBuffer, "OFF") == 0)
-//		    {
-//		    	printf("Received OFF\r\n");
-//		    }
-//		    else{
-//		    	printf("Received something else\r\n");
-//		    }
-//		  }
+			// check if you can send to thingspeak; if yes then send and start 16 sec timer, if no then wait
+			while(thingspeakTimeoutFlag);
+
+			ESP_WeatherDataPrepare(&weather_data, &raw_data, 0);
+			for(int i = 0; i < 5; i++){
+				ret = ESP_SendData("184.106.153.149", &weather_data, 0);
+				if(ret != ESP_OK){
+					HAL_Delay(5000);
+				}
+				else if(ret == ESP_OK){
+					break;
+				}
+			}
+			__HAL_TIM_CLEAR_IT(&htim11, TIM_IT_UPDATE);
+			thingspeakTimeoutFlag = 1;
+			HAL_TIM_Base_Start_IT(&htim11);
+		}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -507,6 +523,37 @@ static void MX_TIM10_Init(void)
 }
 
 /**
+  * @brief TIM11 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM11_Init(void)
+{
+
+  /* USER CODE BEGIN TIM11_Init 0 */
+
+  /* USER CODE END TIM11_Init 0 */
+
+  /* USER CODE BEGIN TIM11_Init 1 */
+
+  /* USER CODE END TIM11_Init 1 */
+  htim11.Instance = TIM11;
+  htim11.Init.Prescaler = 42000-1;
+  htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim11.Init.Period = 32000-1;
+  htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM11_Init 2 */
+
+  /* USER CODE END TIM11_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -631,12 +678,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : NRF_IRQ_Pin */
   GPIO_InitStruct.Pin = NRF_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(NRF_IRQ_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
@@ -650,14 +697,19 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	}
 }
 
-// minute timer interrupt
+// 2 minute timer interrupt
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim == &htim10){
 		timerElapsedFlag++;
-		if(timerElapsedFlag == 2){
+		if(timerElapsedFlag == 4){
 			startMeasFlag = 1;
 			timerElapsedFlag = 0;
 		}
+	}
+	if(htim == &htim11){
+		thingspeakTimeoutFlag = 0;
+		HAL_TIM_Base_Stop_IT(&htim11);
+		TIM11->CNT = 0;
 	}
 }
 /* USER CODE END 4 */

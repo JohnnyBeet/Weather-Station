@@ -43,7 +43,7 @@ uint16_t am2320_crc_checker(uint8_t* data, uint8_t size){
 	return crc;
 }
 
-void am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320){
+uint8_t am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320){
 	/* regs:
 	 * empty_reg for waking the sensor up
 	 * read_regs for triggering measurements and reading from sensor registers
@@ -66,7 +66,7 @@ void am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320){
 		printf("Prompting for measurement went wrong!\n");
 		//TODO: this is tragic, need to rework this!!!
 		HAL_I2C_Init(am2320->i2c_handle_);
-		return;
+		return 0;
 	}
 
 	/*TODO: comment properly
@@ -76,7 +76,7 @@ void am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320){
 		printf("Receiving am2320->sensor_data_ failed!\n");
 		//TODO: this is tragic, need to rework this!!!
 		HAL_I2C_Init(am2320->i2c_handle_);
-		return;
+		return 0;
 	}
 
 	// check crc
@@ -84,12 +84,12 @@ void am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320){
 	uint16_t calculated_crc = am2320_crc_checker((am2320->sensor_data_), 6);
 	if(sensor_crc != calculated_crc){
 		printf("Wrong CRC!\n");
-		return;
+		return 0;
 	}
 
 	// different types, because temperature may be negative
 	am2320->last_temperature = (int16_t)((am2320->sensor_data_[4]<<8)+am2320->sensor_data_[5]);
 	am2320->last_humidity = ((am2320->sensor_data_[2]<<8)+am2320->sensor_data_[3]);
 
-
+	return 1;
 }
