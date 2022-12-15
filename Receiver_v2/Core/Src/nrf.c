@@ -578,7 +578,6 @@ bool NRF_IRQ_Callback(uint8_t* nrfInterrupt, uint8_t* data_buffer){
 				return NRF_ERROR;
 			}
 		}
-		*nrfInterrupt = 0;
 		return NRF_OK;
 	}
 	else{
@@ -673,65 +672,82 @@ bool NRF_ResetPlos(){
  */
 
 void NRF_PrintConfig(){
+	char buffer[128];
 	uint8_t reg = 0;
 	NRF_ReadRegs(NRF_REG_CONFIG, &reg, 1);
-	printf("CONFIG: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"CONFIG: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 
 	NRF_ReadRegs(NRF_REG_EN_AA, &reg, 1);
-	printf("EN_AA: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"EN_AA: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_EN_RXADDR, &reg, 1);
-	printf("EN_RXADDR: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"EN_RXADDR: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_SETUP_AW, &reg, 1);
-	printf("SETUP_AW: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"SETUP_AW: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_SETUP_RETR, &reg, 1);
-	printf("SETUP_RETR: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"SETUP_RETR: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_RF_CH, &reg, 1);
-	printf("RF_CH: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"RF_CH: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_RF_SETUP, &reg, 1);
-	printf("RF_SETUP: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"RF_SETUP: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_STATUS, &reg, 1);
-	printf("STATUS: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"STATUS: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_OBSERVE_TX, &reg, 1);
-	printf("OBSERVE_TX: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"OBSERVE_TX: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
 
 	uint8_t address[6];
 	for(int i=0; i<6; i++){
 		NRF_ReadRegs(NRF_REG_RX_ADDR_BASE+i, address, 6);
-		printf("RX_ADDR_P%d: 0x%X%X%X%X%X%X\n", i, address[0], address[1], address[2], address[3], address[4], address[5]);
+		sprintf(buffer,"RX_ADDR_P%d: 0x%X%X%X%X%X%X\r\n", i, address[0], address[1], address[2], address[3], address[4], address[5]);
+		CDC_Transmit_FS(buffer, sizeof(buffer));
+		memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	}
 	NRF_ReadRegs(NRF_REG_TX_ADDR, address, 6);
-	printf("RX_ADDR_TX: 0x%X%X%X%X%X%X\n", address[0], address[1], address[2], address[3], address[4], address[5]);
-
+	sprintf(buffer,"RX_ADDR_TX: 0x%X%X%X%X%X%X\r\n", address[0], address[1], address[2], address[3], address[4], address[5]);
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	for(int i=0; i<6; i++){
 		NRF_ReadRegs(NRF_REG_RX_PW_BASE+i, &reg, 1);
-		printf("RX_PW_P%d: %d%d%d%d%d%d%d%d\n",i, (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+		sprintf(buffer,"RX_PW_P%d: %d%d%d%d%d%d%d%d\r\n",i, (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 				(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+		CDC_Transmit_FS(buffer, sizeof(buffer));
+		memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	}
 	NRF_ReadRegs(NRF_REG_FIFO_STATUS, &reg, 1);
-	printf("FIFO_STATUS: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"FIFO_STATUS: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_DYNPD, &reg, 1);
-	printf("DYNPD: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"DYNPD: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
-
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 	NRF_ReadRegs(NRF_REG_FEATURE, &reg, 1);
-	printf("FEATURE: %d%d%d%d%d%d%d%d\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
+	sprintf(buffer,"FEATURE: %d%d%d%d%d%d%d%d\r\n", (reg >> 7) & 1,(reg >> 6) & 1,(reg >> 5) & 1,
 			(reg >> 4) & 1,(reg >> 3) & 1,(reg >> 2) & 1,(reg >> 1) & 1, reg & 1);
+	CDC_Transmit_FS(buffer, sizeof(buffer));
+	memset(buffer, 0, sizeof(buffer)/sizeof(char));
 }
