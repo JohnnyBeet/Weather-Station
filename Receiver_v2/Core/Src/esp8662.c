@@ -101,13 +101,17 @@ ESP_ERROR_CODE ESP_WiFiConnect(const char* wifi_ssid, const char* wifi_pass){
 /*
  * TODO: comment
  */
-void ESP_WeatherDataPrepare(WeatherDataToSend* weather_data, RawMeasurements* raw_data){
-	weather_data->base_float_humidity = raw_data->base_am2320_humidity / 10.;
-	weather_data->base_float_temperature = (raw_data->base_am2320_temperature / 10. + raw_data->base_bmp280_temp / 100.) / 2.;
-	weather_data->base_float_press = raw_data->base_bmp280_press / 25600.;
-	weather_data->remote_float_humidity = 0.0;
-	weather_data->remote_float_press = 0.0;
-	weather_data->remote_float_temperature = 0.0;
+void ESP_WeatherDataPrepare(WeatherDataToSend* weather_data, RawMeasurements* raw_data, int baseFlag){
+	if(baseFlag){
+		weather_data->base_float_humidity = raw_data->base_am2320_humidity / 10.;
+		weather_data->base_float_temperature = (raw_data->base_am2320_temperature / 10. + raw_data->base_bmp280_temp / 100.) / 2.;
+		weather_data->base_float_press = raw_data->base_bmp280_press / 25600.;
+	}
+	else if(baseFlag == 0){
+		weather_data->remote_float_humidity = raw_data->remote_am2320_humidity / 10.;
+		weather_data->remote_float_press = raw_data->remote_bmp280_press / 25600.;
+		weather_data->remote_float_temperature =  (raw_data->remote_am2320_temperature / 10. + raw_data->remote_bmp280_temp / 100.) / 2.;
+	}
 }
 
 /*
@@ -118,12 +122,17 @@ void ESP_WeatherDataPrepare(WeatherDataToSend* weather_data, RawMeasurements* ra
  * @return: one of the error codes: success, failure, timeout
  * @retval: 0,1,2
  */
-ESP_ERROR_CODE ESP_SendData(const char* ip_address, WeatherDataToSend* data){
+ESP_ERROR_CODE ESP_SendData(const char* ip_address, WeatherDataToSend* data, int baseFlag){
 	// prepare string
 	static char data_buffer[200];
-	sprintf(data_buffer, "GET https://api.thingspeak.com/update?api_key=DCFXM8NU6FU9K22B&field1=%2.2f&field2=%2.2f&field3=%4.3f&field4=%4.3f&field5=%2.2f&field6=%2.2f\r\n",
-			data->remote_float_temperature, data->base_float_temperature, data->remote_float_press,
-			data->base_float_press, data->remote_float_humidity, data->base_float_humidity);
+	if(baseFlag){
+		sprintf(data_buffer, "GET https://api.thingspeak.com/update?api_key=DCFXM8NU6FU9K22B&field2=%2.2f&field4=%2.2f&field6=%4.3f\r\n",
+				data->base_float_temperature, data->base_float_press, data->base_float_humidity);
+	}
+	else if(baseFlag == 0){
+		sprintf(data_buffer, "GET https://api.thingspeak.com/update?api_key=DCFXM8NU6FU9K22B&field1=%4.3f&field3=%2.2f&field5=%2.2f\r\n",
+				data->remote_float_temperature, data->remote_float_press, data->remote_float_humidity);
+	}
 
 //	sprintf(data_buffer, "GET https://api.thingspeak.com/update?api_key=DCFXM8NU6FU9K22B&field1=11&field2=11&field3=11&field4=11&field5=11&field6=11\r\n");
 	static char send_command[24];

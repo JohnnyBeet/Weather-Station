@@ -74,7 +74,7 @@ uint16_t am2320_crc_checker(uint8_t* data, uint8_t size);
  * @return doesn't return anything
  * @retval doesn't return anything. Have "return" statements for early quitting.
  */
-void am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320);
+uint8_t am2320_read_temperature_and_humidity(AM2320_HandleTypeDef* am2320);
 
 /*
  * @brief currently not used; too lazy to nicely comment
