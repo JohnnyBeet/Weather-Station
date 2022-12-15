@@ -2,7 +2,7 @@
  * esp8662.h
  *
  *  Created on: 22 lis 2022
- *      Author: jasie
+ *      Author: Jan Pomykacz (JohnnyBeet)
  */
 
 #ifndef INC_ESP8662_H_
