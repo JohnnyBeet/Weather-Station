@@ -1,6 +1,0 @@
-ciśnienie: BMP280 x2 - done
-wilgotność/temperatura: AM2320 x2 - done
-przewody połączeniowe: żeńsko-męskie, żeńsko-żeńskie - któreś done
-transcievery: nrf24L01 x2 - done
-stm32 bluepill x1
-zasilanie x2: duży stm i mały stm, nie wiem jakie konkretnie wymagane, czy z bateryjek czy z laptopa
