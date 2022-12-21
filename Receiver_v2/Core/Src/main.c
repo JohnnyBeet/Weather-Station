@@ -198,11 +198,8 @@ int main(void)
 			break;
 		}
 	}
-//	ret = ESP_WiFiConnect("UPC8001681", "ape7cvyrHk8W"); // cracow
-//	ret = ESP_WiFiConnect("FunBox2-4233", "19DA77C9141D6FE165D23F24D3"); // ww
-//	ret = ESP_WiFiConnect("Redmi", "2a4f83f2ce0c"); // phone hotspot
 	for(int i = 0; i < 5; i++){
-		ret = ESP_WiFiConnect("UPC8001681", "ape7cvyrHk8W"); // cracow
+		ret = ESP_WiFiConnect("your_SSID", "your_wifi_pass");
 		if(ret != ESP_OK){
 			HAL_Delay(5000);
 		}
